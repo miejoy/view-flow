@@ -1,0 +1,23 @@
+name: test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: swift build -v
+    - name: Run tests
+      run: swift test -v --enable-code-coverage
+    - name: Convert code coverage
+      run: xcrun llvm-cov export -format="lcov" -instr-profile=$(find .build -name default.profdata) $(find .build -name view-flowPackageTests) > info.lcov
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
