@@ -13,9 +13,9 @@ import Combine
 public enum ViewEvent {
     case viewDidAppear(viewPath: ViewPath, scene: SceneState)
     case viewDidDisappear(viewPath: ViewPath, scene: SceneState)
-    case addViewState(state: any ViewStateStorable, viewPath: ViewPath, scene: SceneState)
-    case updateViewState(state: any ViewStateStorable, viewPath: ViewPath, scene: SceneState)
-    case removeViewState(state: any ViewStateStorable, viewPath: ViewPath, scene: SceneState)
+    case addViewState(state: any StorableViewState, viewPath: ViewPath, scene: SceneState)
+    case updateViewState(state: any StorableViewState, viewPath: ViewPath, scene: SceneState)
+    case removeViewState(state: any StorableViewState, viewPath: ViewPath, scene: SceneState)
     case fatalError(String)
 }
 

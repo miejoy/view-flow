@@ -17,7 +17,7 @@ public enum SceneAction: Action {
 }
 
 /// 场景状态
-public struct SceneState: StateContainable, SceneStateSharable, ActionBindable {
+public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
     
     public typealias UpState = Never
     public typealias BindAction = SceneAction
@@ -27,7 +27,7 @@ public struct SceneState: StateContainable, SceneStateSharable, ActionBindable {
     /// 当前正在显示的所有 View 的 ViewPath，最后一个为最顶层的 View 对应的 ViewPath
     public var arrAppearViewPath: [ViewPath] = []
     
-    public var subStates: [String : StateStorable] = [:]
+    public var subStates: [String : StorableState] = [:]
     
     var storage: SceneStorage
     
@@ -41,7 +41,7 @@ public struct SceneState: StateContainable, SceneStateSharable, ActionBindable {
     }
 }
 
-extension SceneState: StateReducerLoadable {
+extension SceneState: ReducerLoadableState {
     public static func loadReducers(on store: Store<SceneState>) {
         store.state.storage.sceneStore = store
         // 手动绑定上级 store
@@ -80,7 +80,7 @@ extension SceneState: StateReducerLoadable {
 }
 
 /// 让 Never 可以作为 SceneState 的上级，而 SceneState 真实上级是 AllSceneState
-extension Never : SceneStateSharable {}
+extension Never : SceneSharableState {}
 
 extension EnvironmentValues {
     /// 场景存储器容器

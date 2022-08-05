@@ -240,12 +240,12 @@ final class ViewStateTests: XCTestCase {
 }
 
 
-struct NormalViewState: ViewStateStorable {
+struct NormalViewState: StorableViewState {
     var name: String = ""
 }
 
 var reducerStateReducerCall = false
-struct ReducerViewState: ViewStateStorable, StateReducerLoadable {
+struct ReducerViewState: StorableViewState, ReducerLoadableState {
     var name: String = ""
     
     static func loadReducers(on store: Store<ReducerViewState>) {
@@ -258,7 +258,7 @@ enum NormalViewAction: Action {
 }
 
 var fullViewStateReducerCall = false
-struct FullViewState: FullViewStateStorable {
+struct FullViewState: FullStorableViewState {
     typealias BindAction = NormalViewAction
     
     var name: String = ""
@@ -274,12 +274,12 @@ struct FullViewState: FullViewStateStorable {
     }
 }
 
-struct InitViewState: ViewStateStorable, StateInitable {
+struct InitViewState: StorableViewState, InitializableState {
     var name: String = ""
 }
 
 var initStateReducerCall = false
-struct InitReducerViewState: ViewStateStorable, StateReducerLoadable, StateInitable {
+struct InitReducerViewState: StorableViewState, ReducerLoadableState, InitializableState {
     var name: String = ""
     
     static func loadReducers(on store: Store<InitReducerViewState>) {

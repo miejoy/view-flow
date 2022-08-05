@@ -10,9 +10,9 @@ import Foundation
 import DataFlow
 
 ///  所有场景状态
-struct AllSceneState: StateContainable, StateSharable {
+struct AllSceneState: StateContainable, SharableState {
     
     typealias UpState = AppState
     
-    var subStates: [String : StateStorable] = [:]
+    var subStates: [String : StorableState] = [:]
 }

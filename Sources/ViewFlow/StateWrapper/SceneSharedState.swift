@@ -11,14 +11,14 @@ import SwiftUI
 import DataFlow
 
 /// 同 scene 下可共享的状态
-public protocol SceneStateSharable: StateSharable where UpState: SceneStateSharable {}
+public protocol SceneSharableState: SharableState where UpState: SceneSharableState {}
 
 /// 完整的 scene 下可共享状态
-public protocol FullSceneStateSharable: SceneStateSharable, StateReducerLoadable, ActionBindable {}
+public protocol FullSceneSharableState: SceneSharableState, ReducerLoadableState, ActionBindable {}
 
 
 @propertyWrapper
-public struct SceneSharedState<State: SceneStateSharable> : DynamicProperty {
+public struct SceneSharedState<State: SceneSharableState> : DynamicProperty {
     
     @ObservedObject private var store: Store<State>
     
@@ -50,7 +50,7 @@ public struct SceneSharedState<State: SceneStateSharable> : DynamicProperty {
     }
 }
 
-extension SceneSharedState where State : StateReducerLoadable {
+extension SceneSharedState where State : ReducerLoadableState {
     public init() {
         store = Self.getSceneStore().state.getSharedStore(of: State.self)
         if !(State.self is SceneState.Type) {
@@ -69,7 +69,7 @@ extension SceneState {
     
     /// 获取当前 Scene 共享的状态
     @usableFromInline
-    func getSharedStore<State: SceneStateSharable>(of stateType: State.Type) -> Store<State> {
+    func getSharedStore<State: SceneSharableState>(of stateType: State.Type) -> Store<State> {
         return storeContainer.getSharedStore(of: State.self)
     }
 }
@@ -93,7 +93,7 @@ final class SceneSharedStoreContainer {
         self.sceneStore = sceneStore
     }
     
-    func getSharedStore<State: SceneStateSharable>(of stateType: State.Type) -> Store<State> {
+    func getSharedStore<State: SceneSharableState>(of stateType: State.Type) -> Store<State> {
         let key = ObjectIdentifier(State.self)
         if let store = mapExistSharedStore[key]?.value as? Store<State> {
             return store

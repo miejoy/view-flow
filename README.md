@@ -12,21 +12,21 @@ ViewFlow 是自定义 RSV(Resource & State & View) 设计模式中 State 层的�
 ## 依赖
 
 - iOS 13.0+ / macOS 10.15+
-- Xcode 12.0+
+- Xcode 14.0+
 - Swift 5.4+
 
 ## 简介
 
 ### 该模块包含如下内容:
 
-- StateStorable 的扩展协议:
-  - SceneStateSharable: 当前界面场景的可共享状态
-  - FullSceneStateSharable: 完整的界面场景可共享状态
-  - ViewStateStorable: 界面使用的可存储状态
+- StorableState 的扩展协议:
+  - SceneSharableState: 当前界面场景的可共享状态
+  - FullSceneSharableState: 完整的界面场景可共享状态
+  - StorableViewState: 界面使用的可存储状态
 
 - State 的包装器:
-  - SceneSharedState: 对当前场景内的可共享状态(SceneStateSharable)的包装器，包装的 Store 和 State 都会存储在当前 SceneState 中
-  - ViewState: 界面状态(ViewStateStorable)包装器，包装的 State 回直接存储到当前 SceneState 中
+  - SceneSharedState: 对当前场景内的可共享状态(SceneSharableState)的包装器，包装的 Store 和 State 都会存储在当前 SceneState 中
+  - ViewState: 界面状态(StorableViewState)包装器，包装的 State 回直接存储到当前 SceneState 中
   
 - 定义必要的 State:
   - SceneState: 场景状态，用户保存当前场景下的各种数据，包括当前场景的所有 SceneSharedState 和 ViewState 以及所有 SceneSharedState 对应的 Store
@@ -42,16 +42,16 @@ flowchart TD
 subgraph AppState
 end
 AppState --> SharedState
-subgraph SharedState[StateSharable]
+subgraph SharedState[SharableState]
 AllSceneState
 OtheSharedState
 end
 AllSceneState --> SceneState
-subgraph SceneSharedState[SceneStateSharable]
+subgraph SceneSharedState[SceneSharableState]
 SceneState --> OtheSceneSharedState
 end
 SceneState --> ViewState
-subgraph ViewState[ViewStateStorable]
+subgraph ViewState[StorableViewState]
 AllViewState
 end
 
@@ -72,7 +72,7 @@ dependencies: [
 
 ## 使用
 
-### SceneStateSharable 场景共享状态使用
+### SceneSharableState 场景共享状态使用
 
 可共享状态可以在所有界面共享使用
 
@@ -81,7 +81,7 @@ dependencies: [
 ```swift
 import ViewFlow
 
-struct NormalSharedState : SceneStateSharable {
+struct NormalSharedState : SceneSharableState {
     typealias UpState = SceneState    
     var name: String = ""
 }
@@ -103,21 +103,21 @@ struct NormalSharedView: View {
 }
 ```
 
-### ViewStateStorable 界面状态使用
+### StorableViewState 界面状态使用
 
-使用 ViewState 包装的时候，如果对应 State 继承 StateInitable 可不用初始化，没有则必须初始化
+使用 ViewState 包装的时候，如果对应 State 继承 InitializableState 可不用初始化，没有则必须初始化
 
 ```swift
 import ViewFlow
 import SwiftUI
 
 // 普通 ViewState
-struct NormalState : ViewStateStorable {    
+struct NormalState : StorableViewState {    
     var name: String = ""
 }
 
 // 可初始化的 ViewState
-struct NormalInitState : ViewStateStorable, StateInitable {    
+struct NormalInitState : StorableViewState, InitializableState {    
     var name: String = ""
 }
 
