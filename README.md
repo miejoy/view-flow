@@ -33,7 +33,9 @@ ViewFlow 是自定义 RSV(Resource & State & View) 设计模式中 State 层的�
   - AllSceneState: 所有场景的状态，暂时非公开。当前状态为 App 共享状态，保存 App 中所有存在的 SceneState，直接依附于 AppState，主要作为 SceneState 和 AppState 关联的桥梁
 
 - View 的扩展协议: 
-  - TrackableView: 可追踪的界面协议，
+  - TrackableView: 可追踪的界面协议
+  - InitializableView: 可初始化的界面协议
+  - VoidInitializableView: 可无需参数初始化的界面协议
 
 ### 各种 State 对应关系如下：
 
