@@ -21,6 +21,10 @@ extension Store {
         Binding<T>.init(get: { () -> T in
             self.state[keyPath: keyPath]
         }) { (value, transaction) in
+            if self.state[keyPath: keyPath] == value {
+                // 相同值时不更新
+                return
+            }
             // 这里设置会自动调用监听者
             self[dynamicMember: keyPath] = value
         }
@@ -35,6 +39,10 @@ extension Store {
         Binding<T>.init(get: { () -> T in
             self.state[keyPath: keyPath]
         }) { (value, transaction) in
+            if self.state[keyPath: keyPath] == value {
+                // 相同值时不更新
+                return
+            }
             self.send(action: transformSetToAction(value, transaction))
         }
     }
@@ -51,6 +59,10 @@ extension Store where State: ActionBindable {
         Binding<T>.init(get: { () -> T in
             self.state[keyPath: keyPath]
         }) { (value, transaction) in
+            if self.state[keyPath: keyPath] == value {
+                // 相同值时不更新
+                return
+            }
             self.send(action: transformSetToAction(value, transaction))
         }
     }
