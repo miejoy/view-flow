@@ -52,6 +52,27 @@ final class StoreUtilsTests: XCTestCase {
         XCTAssert(actionCall)
     }
     
+    func testBindingStateWithActionOnly() {
+        let normalStore = Store<NormalViewState>.box(.init())
+        var actionCall = false
+        normalStore.register { (state, action: NormalViewAction) in
+            actionCall = true
+            switch action {
+            case .changeContent(let str):
+                state.name = str
+            }
+        }
+        let newName = "newName"
+        let bindingValue = normalStore.binding(of: \.name, NormalViewAction.changeContent)
+        
+        XCTAssert(!actionCall)
+        
+        bindingValue.wrappedValue = newName
+        XCTAssertEqual(bindingValue.wrappedValue, newName)
+        XCTAssertEqual(normalStore.name, newName)
+        XCTAssert(actionCall)
+    }
+    
     func testBindingStateWithDefaultAction() {
         let normalStore = Store<FullViewState>.box(.init())
         var actionCall = false
@@ -66,6 +87,27 @@ final class StoreUtilsTests: XCTestCase {
         let bindingValue = normalStore.bindingDefault(of: \.name) { (newValue, _) in
             return .changeContent(newName)
         }
+        
+        XCTAssert(!actionCall)
+        
+        bindingValue.wrappedValue = newName
+        XCTAssertEqual(bindingValue.wrappedValue, newName)
+        XCTAssertEqual(normalStore.name, newName)
+        XCTAssert(actionCall)
+    }
+    
+    func testBindingStateWithDefaultActionOnly() {
+        let normalStore = Store<FullViewState>.box(.init())
+        var actionCall = false
+        normalStore.registerDefault { (state, action) in
+            actionCall = true
+            switch action {
+            case .changeContent(let str):
+                state.name = str
+            }
+        }
+        let newName = "newName"
+        let bindingValue = normalStore.bindingDefault(of: \.name, NormalViewAction.changeContent)
         
         XCTAssert(!actionCall)
         
