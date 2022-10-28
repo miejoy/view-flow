@@ -11,7 +11,9 @@ import SwiftUI
 import DataFlow
 
 /// 同 scene 下可共享的状态
-public protocol SceneSharableState: SharableState where UpState: SceneSharableState {}
+public protocol SceneSharableState: SharableState where UpState: SceneSharableState {
+    associatedtype UpState = SceneState
+}
 
 /// 完整的 scene 下可共享状态
 public protocol FullSceneSharableState: SceneSharableState, ReducerLoadableState, ActionBindable {}

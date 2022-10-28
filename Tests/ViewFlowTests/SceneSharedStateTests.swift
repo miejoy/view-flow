@@ -114,12 +114,10 @@ final class SceneSharedStateTests: XCTestCase {
 }
 
 struct NormalSharedState: SceneSharableState {
-    typealias UpState = SceneState
     var name: String = ""
 }
 
 struct DuplicateSharedState: SceneSharableState {
-    typealias UpState = SceneState
     var name: String = ""
     
     var stateId: String = "NormalSharedState"
@@ -131,7 +129,6 @@ enum NormalAction: Action {
 
 var sharedReducerIsLoad = false
 struct FullSharedState: FullSceneSharableState {
-    typealias UpState = SceneState
     typealias BindAction = NormalAction
     var name: String = ""
     

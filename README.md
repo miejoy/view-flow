@@ -84,7 +84,6 @@ dependencies: [
 import ViewFlow
 
 struct NormalSharedState : SceneSharableState {
-    typealias UpState = SceneState    
     var name: String = ""
 }
 ```
