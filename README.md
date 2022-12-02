@@ -146,8 +146,6 @@ import SwiftUI
 struct MainSceneView: View {
     
     @SceneSharedState var sceneState: SceneState
-    // 使用这种方式获取的 store，在 state 更新是不会有通知，因为 Environment 只会影响他的下一级 View 更新
-    // @Environment(\.sceneStore) var sceneStore
     
     var body: some View {
         ZStack(alignment: .top) {

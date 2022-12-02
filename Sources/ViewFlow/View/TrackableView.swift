@@ -7,6 +7,7 @@
 //  可追踪的 View
 
 import SwiftUI
+import DataFlow
 
 /// 可追踪的 View
 public protocol TrackableView: View {
@@ -34,13 +35,6 @@ extension TrackableView {
 
 struct TrackWrapperView<Content: View> : View {
     
-    /// 环境变量窃取器
-    @usableFromInline
-    struct EnvironmentStealer {
-        @usableFromInline
-        @Environment(\.sceneStore) var sceneStore
-    }
-    
     @Environment(\.viewPath) var viewPath
     var trackId: String
     
@@ -50,12 +44,14 @@ struct TrackWrapperView<Content: View> : View {
         return self.content
             .environment(\.viewPath, viewPath.appendPath(trackId))
             .onDisappear {
-                EnvironmentStealer().sceneStore.send(action: .onDisappear(viewPath.appendPath(trackId)))
+                Store<SceneState>.curSceneStore.send(action: .onDisappear(viewPath.appendPath(trackId)))
             }
             .onAppear {
-                EnvironmentStealer().sceneStore.send(action: .onAppear(viewPath.appendPath(trackId)))
+                Store<SceneState>.curSceneStore.send(action: .onAppear(viewPath.appendPath(trackId)))
             }
     }
+    
+    
 }
 
 extension EnvironmentValues {

@@ -20,27 +20,28 @@ public struct ViewState<State: StorableViewState> : DynamicProperty {
     
     /// 环境变量窃取器
     struct EnvironmentStealer {
-        @Environment(\.sceneStore) var sceneStore
+        @Environment(\.sceneId) var sceneId
         @Environment(\.viewPath) var viewPath
     }
     
     public init(wrappedValue value: State) {
         store = Store<State>.box(value)
-        setupLifeCircly()
+        setupLifeCycle()
     }
     
     public init() where State: InitializableState {
         self.init(wrappedValue: State())
     }
     
-    func setupLifeCircly() {
+    func setupLifeCycle() {
         let stealer = EnvironmentStealer()
-        stealer.sceneStore.state.addViewState(state: store.state, on: stealer.viewPath)
-        stealer.sceneStore.observe(store: store) { new, _ in
-            stealer.sceneStore.state.updateViewState(state: new, on: stealer.viewPath)
+        let sceneStore = Store<AllSceneState>.shared.sceneStoreOf(stealer.sceneId)
+        sceneStore.state.addViewState(state: store.state, on: stealer.viewPath)
+        sceneStore.observe(store: store) { [weak sceneStore] new, _ in
+            sceneStore?.state.updateViewState(state: new, on: stealer.viewPath)
         }
-        store.setDestroyCallback { state in
-            stealer.sceneStore.state.removeViewState(state: state, on: stealer.viewPath)
+        store.setDestroyCallback { [weak sceneStore] state in
+            sceneStore?.state.removeViewState(state: state, on: stealer.viewPath)
         }
     }
     
@@ -62,7 +63,7 @@ public struct ViewState<State: StorableViewState> : DynamicProperty {
 extension ViewState where State: ReducerLoadableState {
     public init(wrappedValue value: State) {
         store = Store<State>.box(value)
-        setupLifeCircly()
+        setupLifeCycle()
         State.loadReducers(on: store)
     }
 }
@@ -107,7 +108,7 @@ extension SceneState {
 
 struct ViewStateContainerKey: SceneStorageKey {
     static func defaultValue(on sceneStore: Store<SceneState>?) -> ViewStateContainer {
-        return .init(sceneId: sceneStore?.sceneId ?? "")
+        return .init(sceneId: sceneStore?.sceneId ?? .main)
     }
 }
 
@@ -121,10 +122,10 @@ final class ViewStateContainer {
             viewPath.description + "->" + stateId
         }
     }
-    let sceneId: String
+    let sceneId: SceneId
     var mapViewState: [ViewStateId:StorableState] = [:]
     
-    init(sceneId: String) {
+    init(sceneId: SceneId) {
         self.sceneId = sceneId
         self.mapViewState = [:]
     }

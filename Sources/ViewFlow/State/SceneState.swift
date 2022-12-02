@@ -10,6 +10,28 @@ import Foundation
 import DataFlow
 import SwiftUI
 
+public enum SceneId: CustomStringConvertible, Hashable {
+    case main
+    case custom(String)
+    
+    public init(_ rawValue: String) {
+        if rawValue == "main" {
+            self = .main
+        } else {
+            self = .custom(rawValue)
+        }
+    }
+    
+    public var description: String {
+        switch self {
+        case .main:
+            return "main"
+        case .custom(let str):
+            return str
+        }
+    }
+}
+
 /// 场景事件
 public enum SceneAction: Action {
     case onAppear(ViewPath)
@@ -23,7 +45,7 @@ public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
     public typealias BindAction = SceneAction
     
     /// 当前场景 ID
-    public let sceneId: String
+    public let sceneId: SceneId
     /// 当前正在显示的所有 View 的 ViewPath，最后一个为最顶层的 View 对应的 ViewPath
     public var arrAppearViewPath: [ViewPath] = []
     
@@ -32,10 +54,10 @@ public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
     var storage: SceneStorage
     
     public init() {
-        self.init("Main")
+        self.init(.main)
     }
     
-    public init(_ sceneId: String) {
+    public init(_ sceneId: SceneId) {
         self.sceneId = sceneId
         self.storage = SceneStorage()
     }
@@ -46,18 +68,19 @@ extension SceneState: ReducerLoadableState {
         store.state.storage.sceneStore = store
         // 手动绑定上级 store
         let upStore = Store<AllSceneState>.shared
-        guard upStore.state.subStates[store.state.sceneId] == nil else {
+        let sceneIdStr = store.state.sceneId.description
+        guard upStore.state.subStates[sceneIdStr] == nil else {
             ViewMonitor.shared.fatalError(
-                "Attach SceneState[\(store.state.sceneId)] to AllSceneState failed: exist SceneState with same sceneId!"
+                "Attach SceneState[\(sceneIdStr)] to AllSceneState failed: exist SceneState with same sceneId!"
             )
             return
         }
-        upStore.state.subStates[store.state.sceneId] = store.state
+        upStore.state.subStates[sceneIdStr] = store.state
         upStore.observe(store: store) { newState, _ in
-            Store<AllSceneState>.shared.subStates[newState.sceneId] = newState
+            Store<AllSceneState>.shared.subStates[sceneIdStr] = newState
         }
         store.setDestroyCallback { state in
-            Store<AllSceneState>.shared.subStates.removeValue(forKey: state.sceneId)
+            Store<AllSceneState>.shared.subStates.removeValue(forKey: sceneIdStr)
         }
         
         store.registerDefault { state, action in
@@ -81,19 +104,6 @@ extension SceneState: ReducerLoadableState {
 
 /// 让 Never 可以作为 SceneState 的上级，而 SceneState 真实上级是 AllSceneState
 extension Never : SceneSharableState {}
-
-extension EnvironmentValues {
-    /// 场景存储器容器
-    public var sceneStore: Store<SceneState> {
-        get { self[SceneStoreKey.self] }
-        set { self[SceneStoreKey.self] = newValue }
-    }
-}
-
-/// 场景存储器容器
-struct SceneStoreKey: EnvironmentKey {
-    public static var defaultValue: Store<SceneState> =  Store<SceneState>()
-}
 
 /// 场景容器，各子功能可用它存在数据
 final class SceneStorage {

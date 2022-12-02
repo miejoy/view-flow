@@ -198,11 +198,11 @@ final class ViewStateTests: XCTestCase {
             func receiveViewEvent(_ event: ViewEvent) {
                 if case .fatalError(let message) = event {
                     switch message {
-                    case "Add view state[NormalViewState] to scene[Main] failed: exist same state":
+                    case "Add view state[NormalViewState] to scene[main] failed: exist same state":
                         addErrorCall = true
-                    case "Update view state[NormalViewState] on scene[Main] failed: state not exist":
+                    case "Update view state[NormalViewState] on scene[main] failed: state not exist":
                         updateErrorCall = true
-                    case "Remove view state[NormalViewState] on scene[Main] failed: state not exist":
+                    case "Remove view state[NormalViewState] on scene[main] failed: state not exist":
                         removeErrorCall = true
                     default:
                         break

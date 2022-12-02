@@ -23,18 +23,13 @@ public protocol FullSceneSharableState: SceneSharableState, ReducerLoadableState
 public struct SceneSharedState<State: SceneSharableState> : DynamicProperty {
     
     @ObservedObject private var store: Store<State>
-    
-    /// 环境变量窃取器
-    struct EnvironmentStealer {
-        @Environment(\.sceneStore) var sceneStore
-    }
-    
+
     static func getSceneStore() -> Store<SceneState> {
-        return EnvironmentStealer().sceneStore
+        Store<SceneState>.curSceneStore
     }
     
     public init() {
-        store = Self.getSceneStore().state.getSharedStore(of: State.self)
+        store = Store<SceneState>.curSceneStore.state.getSharedStore(of: State.self)
     }
     
     public var wrappedValue: State {
@@ -85,12 +80,12 @@ struct SceneSharedStoreContainerKey: SceneStorageKey {
 /// 自定义 store 存储器，scene 中的共享 store 需要有地方保存
 @usableFromInline
 final class SceneSharedStoreContainer {
-    let sceneId: String
+    let sceneId: SceneId
     var mapExistSharedStore: [ObjectIdentifier:AnyStore] = [:]
     weak var sceneStore: Store<SceneState>?
     
     init(sceneStore: Store<SceneState>?) {
-        self.sceneId = sceneStore?.sceneId ?? ""
+        self.sceneId = sceneStore?.sceneId ?? .main
         self.mapExistSharedStore = [:]
         self.sceneStore = sceneStore
     }

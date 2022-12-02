@@ -30,7 +30,7 @@ final class SceneStateTests: XCTestCase {
         
         var sceneStore : Store<SceneState>? = Store<SceneState>()
         XCTAssertEqual(allSceneStore.state.subStates.count, 1)
-        XCTAssert((allSceneStore.state.subStates[sceneStore!.sceneId] != nil))
+        XCTAssert((allSceneStore.state.subStates[sceneStore!.sceneId.description] != nil))
         
         sceneStore = nil
         XCTAssert(allSceneStore.state.subStates.isEmpty)
@@ -42,43 +42,44 @@ final class SceneStateTests: XCTestCase {
         
         var sceneStoreMain : Store<SceneState>? = Store<SceneState>()
         XCTAssertEqual(allSceneStore.state.subStates.count, 1)
-        XCTAssert((allSceneStore.state.subStates[sceneStoreMain!.sceneId] != nil))
+        XCTAssert((allSceneStore.state.subStates[sceneStoreMain!.sceneId.description] != nil))
         
-        var sceneStoreSecond : Store<SceneState>? = Store<SceneState>.box(SceneState("Second"))
+        var sceneStoreSecond : Store<SceneState>? = Store<SceneState>.box(SceneState(.custom("Second")))
         XCTAssertEqual(allSceneStore.state.subStates.count, 2)
-        XCTAssert((allSceneStore.state.subStates[sceneStoreSecond!.state.sceneId] != nil))
+        XCTAssert((allSceneStore.state.subStates[sceneStoreSecond!.state.sceneId.description] != nil))
         
         sceneStoreMain = nil
         sceneStoreSecond = nil
         XCTAssert(allSceneStore.state.subStates.isEmpty)
     }
-    
-    func testTwoSceneWithSameSceneId() {
-        resetDefaultSceneState()
-        let sceneStore = SceneSharedState<Never>.getSceneStore()
-        let mainSceneId = "Main"
-        XCTAssertEqual(sceneStore.sceneId, mainSceneId)
-        
-        ViewMonitor.shared.arrObservers = []
-        class Oberver: ViewMonitorOberver {
-            var sameSceneIdFatalErrorCall = false
-            func receiveViewEvent(_ event: ViewEvent) {
-                if case .fatalError(let message) = event,
-                    message == "Attach SceneState[Main] to AllSceneState failed: exist SceneState with same sceneId!" {
-                    sameSceneIdFatalErrorCall = true
-                }
-            }
-        }
-        let oberver = Oberver()
-        let cancellable = ViewMonitor.shared.addObserver(oberver)
-        
-        XCTAssert(!oberver.sameSceneIdFatalErrorCall)
-        let sameSceneStore = Store<SceneState>.shared
-        XCTAssertEqual(sceneStore.sceneId, sameSceneStore.sceneId)
-        XCTAssert(oberver.sameSceneIdFatalErrorCall)
-        
-        cancellable.cancel()
-    }
+
+    // 目前不可能出现同一个 SceneId 重复注册的情况
+//    func testTwoSceneWithSameSceneId() {
+//        resetDefaultSceneState()
+//        let sceneStore = SceneSharedState<Never>.getSceneStore()
+//        let mainSceneId: SceneId = .main
+//        XCTAssertEqual(sceneStore.sceneId, mainSceneId)
+//        
+//        ViewMonitor.shared.arrObservers = []
+//        class Oberver: ViewMonitorOberver {
+//            var sameSceneIdFatalErrorCall = false
+//            func receiveViewEvent(_ event: ViewEvent) {
+//                if case .fatalError(let message) = event,
+//                    message == "Attach SceneState[Main] to AllSceneState failed: exist SceneState with same sceneId!" {
+//                    sameSceneIdFatalErrorCall = true
+//                }
+//            }
+//        }
+//        let oberver = Oberver()
+//        let cancellable = ViewMonitor.shared.addObserver(oberver)
+//        
+//        XCTAssert(!oberver.sameSceneIdFatalErrorCall)
+//        let sameSceneStore = Store<SceneState>.shared
+//        XCTAssertEqual(sceneStore.sceneId, sameSceneStore.sceneId)
+//        XCTAssert(oberver.sameSceneIdFatalErrorCall)
+//        
+//        cancellable.cancel()
+//    }
     
     func testSceneStateAction() {
         resetDefaultSceneState()
