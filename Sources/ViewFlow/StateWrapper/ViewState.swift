@@ -35,7 +35,7 @@ public struct ViewState<State: StorableViewState> : DynamicProperty {
     
     func setupLifeCycle() {
         let stealer = EnvironmentStealer()
-        let sceneStore = Store<AllSceneState>.shared.sceneStoreOf(stealer.sceneId)
+        let sceneStore = Store<AllSceneState>.shared.sceneStore(of: stealer.sceneId)
         sceneStore.state.addViewState(state: store.state, on: stealer.viewPath)
         sceneStore.observe(store: store) { [weak sceneStore] new, _ in
             sceneStore?.state.updateViewState(state: new, on: stealer.viewPath)
