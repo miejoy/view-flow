@@ -29,10 +29,6 @@ public struct ViewState<State: StorableViewState> : DynamicProperty {
         setupLifeCycle()
     }
     
-    public init() where State: InitializableState {
-        self.init(wrappedValue: State())
-    }
-    
     func setupLifeCycle() {
         let stealer = EnvironmentStealer()
         let sceneStore = Store<AllSceneState>.shared.sceneStore(of: stealer.sceneId)
@@ -64,13 +60,6 @@ extension ViewState where State: ReducerLoadableState {
     public init(wrappedValue value: State) {
         store = Store<State>.box(value)
         setupLifeCycle()
-        State.loadReducers(on: store)
-    }
-}
-
-extension ViewState where State: ReducerLoadableState & InitializableState {
-    public init() {
-        self.init(wrappedValue: State())
         State.loadReducers(on: store)
     }
 }

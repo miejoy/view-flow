@@ -82,7 +82,7 @@ final class ViewStateTests: XCTestCase {
     
     func testInitViewState() {
         struct InitView: View {
-            @ViewState var initState: InitViewState
+            @ViewState var initState: InitViewState = .init()
             
             var body: some View {
                 Text(initState.name)
@@ -99,7 +99,7 @@ final class ViewStateTests: XCTestCase {
     
     func testInitReducerViewState() {
         struct InitView: View {
-            @ViewState var initState: InitReducerViewState
+            @ViewState var initState: InitReducerViewState = .init()
             
             var body: some View {
                 Text(initState.name)
