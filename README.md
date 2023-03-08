@@ -36,6 +36,8 @@ ViewFlow 是自定义 RSV(Resource & State & View) 设计模式中 State 层的�
   - TrackableView: 可追踪的界面协议
   - InitializableView: 可初始化的界面协议
   - VoidInitializableView: 可无需参数初始化的界面协议
+  - RoutableView: 可路由的界面协议
+  - VoidRoutableView: 可无参数路由的界面协议
 
 ### 各种 State 对应关系如下：
 
@@ -166,6 +168,24 @@ import ViewFlow
 import SwiftUI
 
 struct ContentView: TrackableView {
+    // 这里可以获取当前 View 被使用时所在的 ViewPath
+    @Environment(\.viewPath) var viewPath
+    var content: some View {
+        Text("Hello")
+    }
+}
+```
+
+### RoutableView 可追踪界面使用
+
+只要继承了 RoutableView 就是可以路由的界面，继承 VoidRoutableView 就是可以无参数初始化的可路由界面。
+RoutableView 都有一个默认的路由标识，即 defaultRoute，其他的库可以用这个来注册和管理路由界面
+
+```swift
+import ViewFlow
+import SwiftUI
+
+struct ContentRouteView: VoidRoutableView {
     // 这里可以获取当前 View 被使用时所在的 ViewPath
     @Environment(\.viewPath) var viewPath
     var content: some View {

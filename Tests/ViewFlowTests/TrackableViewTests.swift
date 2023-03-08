@@ -18,9 +18,12 @@ final class TrackableViewTests: XCTestCase {
         let mainBody = mainView.body
 
         XCTAssert(((mainBody as? TrackWrapperView<ContentView>) != nil))
-//
-//        let contentWrapperView = mainBody as! TrackWrapperView<ContentView>
-//        let contentBody = contentWrapperView.body
+        
+        let contentWrapperView = mainBody as! TrackWrapperView<ContentView>
+        print(type(of: contentWrapperView.body))
+        let contentView = contentWrapperView.content
+        let contentBody = contentView.body
+        XCTAssert(((contentBody as? TrackWrapperView<Text>) != nil))
     }
 }
 
@@ -38,11 +41,11 @@ struct ContentView: TrackableView {
     }
 }
 
-struct MainView_Preview: PreviewProvider {
-    static var previews: some View {
-        MainView()
-    }
-}
+//struct MainView_Preview: PreviewProvider {
+//    static var previews: some View {
+//        MainView()
+//    }
+//}
 
 struct MyApp: App {
     var body: some Scene {

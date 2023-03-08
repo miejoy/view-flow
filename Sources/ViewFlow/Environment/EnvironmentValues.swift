@@ -13,9 +13,20 @@ extension EnvironmentValues {
         get { self[SceneIdKey.self] }
         set { self[SceneIdKey.self] = newValue }
     }
+    
+    /// 当前 View 所在的 界面追踪路径
+    var viewPath: ViewPath {
+        get { self[ViewPathKey.self] }
+        set { self[ViewPathKey.self] = newValue }
+    }
 }
 
 /// 场景 ID 对应 Key
 struct SceneIdKey: EnvironmentKey {
     static var defaultValue: SceneId =  .main
+}
+
+/// 获取当前 View 所在 界面追踪路径 的环境 Key
+struct ViewPathKey: EnvironmentKey {
+    static var defaultValue: ViewPath = ViewPath()
 }
