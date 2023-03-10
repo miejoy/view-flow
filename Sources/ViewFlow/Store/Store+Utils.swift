@@ -69,6 +69,12 @@ extension Store {
             self.send(action: transformSetToAction(value, transaction))
         }
     }
+    
+    /// 动态嫁接可比较的 State 属性为可绑定的属性
+    @inlinable
+    public subscript<Subject: Equatable>(dynamicMember keyPath: WritableKeyPath<State, Subject>) -> Binding<Subject> {
+        self.binding(of: keyPath)
+    }
 }
 
 extension Store where State: ActionBindable {

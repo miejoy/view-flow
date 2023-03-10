@@ -116,5 +116,28 @@ final class StoreUtilsTests: XCTestCase {
         XCTAssertEqual(normalStore.name, newName)
         XCTAssert(actionCall)
     }
+    
+    func testStoreSubscriptBindingState() {
+        
+        func getBindingValue(_ binding: Binding<String>) -> Binding<String> {
+            return binding
+        }
+        
+        let normalStore = Store<NormalViewState>.box(.init())
+        
+        
+        let bindingValue = getBindingValue(normalStore.name)
+        
+        XCTAssertEqual(bindingValue.wrappedValue, "")
+        
+        let newName = "newName"
+        bindingValue.wrappedValue = newName
+        XCTAssertEqual(bindingValue.wrappedValue, newName)
+        XCTAssertEqual(normalStore.name, newName)
+        
+        let secondName = "secondName"
+        normalStore.name = secondName
+        XCTAssertEqual(bindingValue.wrappedValue, secondName)
+    }
 }
 
