@@ -13,9 +13,8 @@ let package = Package(
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
-        .library(
-            name: "ViewFlow",
-            targets: ["ViewFlow"]),
+        .library(name: "ViewFlow", targets: ["ViewFlow"]),
+        .library(name: "XCTViewFlow", targets: ["XCTViewFlow"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -30,8 +29,16 @@ let package = Package(
             dependencies: [
                 .product(name: "DataFlow", package: "data-flow")
             ]),
+        .target(
+            name: "XCTViewFlow",
+            dependencies: [
+                .target(name: "ViewFlow")
+            ]),
         .testTarget(
             name: "ViewFlowTests",
-            dependencies: ["ViewFlow"]),
+            dependencies: [
+                "ViewFlow",
+                "XCTViewFlow"
+            ]),
     ]
 )

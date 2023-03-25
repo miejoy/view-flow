@@ -10,10 +10,10 @@ import UIKit
 #endif
 import SwiftUI
 
-class ViewTest {
+public class ViewTest {
     
     #if os(macOS)
-    static var window: NSWindow = {
+    public static var window: NSWindow = {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 200, height: 200),
             styleMask: [.titled, .resizable, .miniaturizable, .closable],
@@ -25,7 +25,7 @@ class ViewTest {
         return window
     }()
     
-    static func host<V: View>(_ view: V, size: CGSize? = nil) -> NSHostingController<V> {
+    public static func host<V: View>(_ view: V, size: CGSize? = nil) -> NSHostingController<V> {
         let parentVC = window.contentViewController!
         let hosting = NSHostingController(rootView: view)
         let size = size ?? parentVC.view.bounds.size
@@ -43,18 +43,18 @@ class ViewTest {
         return hosting
     }
     
-    static func refreshHost<V: View>(_ hosting: NSHostingController<V>) {
+    public static func refreshHost<V: View>(_ hosting: NSHostingController<V>) {
         hosting.view.needsLayout = true
         window.layoutIfNeeded()
     }
     
-    static func releaseHost<V: View>(_ hosting: NSHostingController<V>) {
+    public static func releaseHost<V: View>(_ hosting: NSHostingController<V>) {
         hosting.view.removeFromSuperview()
         hosting.removeFromParent()
     }
     
     #elseif os(iOS) || os(tvOS)
-    static var window: UIWindow = {
+    public static var window: UIWindow = {
         let window = UIWindow(frame: UIScreen.main.bounds)
         window.rootViewController = UIViewController()
         window.rootViewController?.view.translatesAutoresizingMaskIntoConstraints = false
@@ -63,7 +63,7 @@ class ViewTest {
         return window
     }()
         
-    static func host<V: View>(_ view: V, size: CGSize? = nil) -> UIHostingController<V> {
+    public static func host<V: View>(_ view: V, size: CGSize? = nil) -> UIHostingController<V> {
         let parentVC = window.rootViewController!
         let hosting = UIHostingController(rootView: view)
         let size = size ?? parentVC.view.bounds.size
@@ -83,12 +83,12 @@ class ViewTest {
         return hosting
     }
     
-    static func refreshHost<V: View>(_ hosting: UIHostingController<V>) {
+    public static func refreshHost<V: View>(_ hosting: UIHostingController<V>) {
         hosting.view.setNeedsLayout()
         hosting.view.layoutIfNeeded()
     }
     
-    static func releaseHost<V: View>(_ hosting: UIHostingController<V>) {
+    public static func releaseHost<V: View>(_ hosting: UIHostingController<V>) {
         hosting.willMove(toParent: nil)
         hosting.view.removeFromSuperview()
         hosting.removeFromParent()

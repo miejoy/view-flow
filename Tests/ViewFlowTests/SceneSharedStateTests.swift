@@ -9,6 +9,7 @@ import XCTest
 import SwiftUI
 import DataFlow
 @testable import ViewFlow
+import XCTViewFlow
 
 final class SceneSharedStateTests: XCTestCase {
     
