@@ -127,24 +127,8 @@ extension Store where State: SceneSharableState {
     }
 }
 
-extension Store where State: SceneSharableState & ReducerLoadableState {
-    // 默认读取 主场景
-    public static var shared: Store<State> {
-        let store = Store<AllSceneState>.shared.sceneStore().state.getSharedStore(of: State.self)
-        State.loadReducers(on: store)
-        return store
-    }
-}
-
 extension Store where State == SceneState {
-    /// 环境变量窃取器
-    @usableFromInline
-    struct EnvironmentStealer {
-        @usableFromInline
-        @Environment(\.sceneId) var sceneId
-    }
-    
-    public static var curSceneStore: Store<State> {
-        Store<AllSceneState>.shared.sceneStore(of: EnvironmentStealer().sceneId)
+    public static func shared(on sceneId: SceneId) -> Store<State> {
+        Store<AllSceneState>.shared.sceneStore(of: sceneId)
     }
 }

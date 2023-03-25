@@ -8,6 +8,7 @@
 
 import SwiftUI
 import DataFlow
+import Combine
 
 /// 可存储的界面状态
 public protocol StorableViewState: AttachableState where UpState == SceneState {}
@@ -15,52 +16,82 @@ public protocol FullStorableViewState: StorableViewState, ReducerLoadableState, 
 
 @propertyWrapper
 public struct ViewState<State: StorableViewState> : DynamicProperty {
+
+    @StateObject
+    var storage: ViewStateWrapperStorage<State>
     
-    @ObservedObject private var store: Store<State>
-    
-    /// 环境变量窃取器
-    struct EnvironmentStealer {
-        @Environment(\.sceneId) var sceneId
-        @Environment(\.viewPath) var viewPath
-    }
+    @Environment(\.sceneId)
+    var sceneId
+    @Environment(\.viewPath)
+    var viewPath
+    @Environment(\.recordViewState)
+    var recordViewState
     
     public init(wrappedValue value: State) {
-        store = Store<State>.box(value)
-        setupLifeCycle()
-    }
-    
-    func setupLifeCycle() {
-        let stealer = EnvironmentStealer()
-        let sceneStore = Store<AllSceneState>.shared.sceneStore(of: stealer.sceneId)
-        sceneStore.state.addViewState(state: store.state, on: stealer.viewPath)
-        sceneStore.observe(store: store) { [weak sceneStore] new, _ in
-            sceneStore?.state.updateViewState(state: new, on: stealer.viewPath)
-        }
-        store.setDestroyCallback { [weak sceneStore] state in
-            sceneStore?.state.removeViewState(state: state, on: stealer.viewPath)
-        }
+        self._storage = .init(wrappedValue: .init(state: value))
     }
     
     public var wrappedValue: State {
         get {
-            store.state
+            storage.store.state
         }
         
         nonmutating set {
-            store.state = newValue
+            storage.store.state = newValue
         }
     }
     
     public var projectedValue: Store<State> {
-        store
+        storage.store
+    }
+    
+    public func update() {
+        if !storage.isReady {
+            storage.configIfNeed(sceneId, viewPath, recordViewState)
+        }
     }
 }
 
-extension ViewState where State: ReducerLoadableState {
-    public init(wrappedValue value: State) {
-        store = Store<State>.box(value)
-        setupLifeCycle()
-        State.loadReducers(on: store)
+// MARK: - ViewStateWrapperStorage
+
+/// 界面状态包装器对应存储器，暂时只在内部使用
+final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject {
+    
+    @Published
+    var refreshTrigger: Bool = false
+
+    var store: Store<State>
+    var isReady: Bool = false
+    
+    var cancellable: AnyCancellable? = nil
+    
+    init(state: State) {
+        self.store = .box(state)
+    }
+    
+    func configIfNeed(_ sceneId: SceneId, _ viewPath: ViewPath, _ recordViewState: Bool) {
+        if !isReady {
+            self.cancellable = store.addObserver { [weak self] new, old in
+                self?.refreshTrigger.toggle()
+            }
+            if recordViewState {
+                setupLifeCycle(sceneId, viewPath)
+            }
+            isReady = true
+        }
+    }
+    
+    // 记录 ViewState 的话想，需要设置生命周期中的各种过程
+    func setupLifeCycle(_ sceneId: SceneId, _ viewPath: ViewPath) {
+        let sceneStore = Store<AllSceneState>.shared.sceneStore(of: sceneId)
+        sceneStore.state.addViewState(state: store.state, on: viewPath)
+        sceneStore.observe(store: store) { [weak sceneStore] new, _ in
+            sceneStore?.state.updateViewState(state: new, on: viewPath)
+        }
+        
+        store.setDestroyCallback { [weak sceneStore] state in
+            sceneStore?.state.removeViewState(state: state, on: viewPath)
+        }
     }
 }
 

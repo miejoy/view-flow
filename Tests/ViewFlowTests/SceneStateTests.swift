@@ -17,7 +17,7 @@ final class SceneStateTests: XCTestCase {
     }
     
     func resetDefaultSceneState() {
-        let sceneStore = SceneSharedState<Never>.getSceneStore()
+        let sceneStore = Store<SceneState>.shared
         sceneStore.subStates = [:]
         sceneStore.arrAppearViewPath = []
         sceneStore.storage.storage = [:]
@@ -83,7 +83,7 @@ final class SceneStateTests: XCTestCase {
     
     func testSceneStateAction() {
         resetDefaultSceneState()
-        let sceneStore = SceneSharedState<Never>.getSceneStore()
+        let sceneStore = Store<SceneState>.shared
         
         let firstPath = ViewPath(arrPaths: [], "MainView")
         let secondPath = ViewPath(arrPaths: firstPath.arrPaths, "SecondView")

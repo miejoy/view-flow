@@ -13,7 +13,7 @@ import DataFlow
 final class ViewStateTests: XCTestCase {
     
     func resetDefaultSceneState() {
-        let sceneStore = SceneSharedState<Never>.getSceneStore()
+        let sceneStore = Store<SceneState>.shared
         sceneStore.subStates = [:]
         sceneStore.arrAppearViewPath = []
         sceneStore.storage.storage = [:]
@@ -21,28 +21,81 @@ final class ViewStateTests: XCTestCase {
     
     func testViewState() {
         resetDefaultSceneState()
+        
+        var storage: ViewStateWrapperStorage<NormalViewState>? = nil
+        var normalStore: Store<NormalViewState>? = nil
+                
         struct NormalView: View {
             @ViewState var normalState = NormalViewState()
+            var callback: (ViewStateWrapperStorage<NormalViewState>, Store<NormalViewState>) -> Void
             
             var body: some View {
-                Text(normalState.name)
+                callback(_normalState.storage, $normalState)
+                return Text(normalState.name)
             }
         }
         
-        let normalView = NormalView()
+        let normalView = NormalView { storage = $0; normalStore = $1 }
+        let host = ViewTest.host(normalView)
+        
+        XCTAssertNotNil(storage)
+        XCTAssertTrue(storage?.isReady ?? false)
+        XCTAssertNotNil(normalStore)
+                
         var changeCall = false
-        let cancellable = normalView.$normalState.objectWillChange.sink {
+        let cancellable = storage?.objectWillChange.sink {
             changeCall = true
         }
         
-        XCTAssert(!changeCall)
-        
+        XCTAssertFalse(changeCall)
         let newName = "newName"
-        normalView.normalState.name = newName
-        XCTAssert(changeCall)
-        XCTAssertEqual(normalView.$normalState.name, newName)
+        normalStore?.name = newName
+        XCTAssertTrue(changeCall)
+        XCTAssertEqual(storage?.store.name, newName)
         
-        cancellable.cancel()
+        ViewTest.releaseHost(host)
+        cancellable?.cancel()
+    }
+    
+    func testViewStateRefreshInView() {
+        var storage: ViewStateWrapperStorage<NormalViewState>? = nil
+        var normalStore: Store<NormalViewState>? = nil
+                
+        struct NormalView: View {
+            @ViewState var normalState = NormalViewState()
+            var callback: (ViewStateWrapperStorage<NormalViewState>, Store<NormalViewState>) -> Void
+            
+            var body: some View {
+                callback(_normalState.storage, $normalState)
+                return Text(normalState.name)
+            }
+        }
+        
+        var secondRefreshCall = false
+        let normalView = NormalView {
+            if let oldStorage = storage, let oldStore = normalStore {
+                XCTAssertTrue(oldStorage === $0)
+                XCTAssertTrue(oldStore === $1)
+                secondRefreshCall = true
+            } else {
+                storage = $0; normalStore = $1
+            }
+        }
+        let host = ViewTest.host(normalView)
+        
+        var changeCall = false
+        let cancellable = storage?.objectWillChange.sink {
+            changeCall = true
+        }
+        
+        normalStore?.name = "123"
+        XCTAssertTrue(changeCall)
+        ViewTest.refreshHost(host)
+
+        XCTAssertTrue(secondRefreshCall)
+
+        ViewTest.releaseHost(host)
+        cancellable?.cancel()
     }
     
     func testReducerViewState() {
@@ -53,48 +106,86 @@ final class ViewStateTests: XCTestCase {
                 Text(reducerState.name)
             }
         }
-        
+                
         reducerStateReducerCall = false
-        _ = ReducerView()
+        let reducerView = ReducerView()
+        let host = ViewTest.host(reducerView)
         XCTAssert(reducerStateReducerCall)
+        
+        ViewTest.releaseHost(host)
     }
     
     func testFullViewState() {
+        var storage: ViewStateWrapperStorage<FullViewState>? = nil
+        var fullStore: Store<FullViewState>? = nil
+                
         struct FullView: View {
             @ViewState var fullState = FullViewState()
+            var callback: (ViewStateWrapperStorage<FullViewState>, Store<FullViewState>) -> Void
             
             var body: some View {
-                Text(fullState.name)
-                Button("Random Text") {
-                    $fullState.send(action: .changeContent(String(Int.random(in: 100...999))))
+                callback(_fullState.storage, $fullState)
+                return ZStack {
+                    Text(fullState.name)
+                    Button("Random Text") {
+                        $fullState.send(action: .changeContent(String(Int.random(in: 100...999))))
+                    }
+                }
+                .onAppear {
+                    XCTAssertEqual(fullState.name, "")
+                    $fullState.send(action: .changeContent("newName"))
                 }
             }
         }
         
         reducerStateReducerCall = false
-        let fullView = FullView()
-        XCTAssert(reducerStateReducerCall)
+        var secondRefreshCall = false
+        let fullView = FullView() {
+            if let oldStorage = storage, let oldStore = fullStore {
+                XCTAssertTrue(oldStorage === $0)
+                XCTAssertTrue(oldStore === $1)
+                secondRefreshCall = true
+            } else {
+                storage = $0; fullStore = $1
+            }
+        }
+        let host = ViewTest.host(fullView)
+        XCTAssertTrue(reducerStateReducerCall)
         
-        let content = String(Int.random(in: 100...999))
-        fullView.$fullState.send(action: .changeContent(content))
-        XCTAssertEqual(fullView.$fullState.name, content)
+        XCTAssertTrue(secondRefreshCall)
+        
+        XCTAssertEqual(fullStore?.name, "newName")
+        
+        ViewTest.releaseHost(host)
     }
     
     func testInitViewState() {
         struct InitView: View {
             @ViewState var initState: InitViewState = .init()
+            var callback: (Store<InitViewState>) -> Void
             
             var body: some View {
-                Text(initState.name)
+                callback($initState)
+                return Text(initState.name)
+                    .onAppear {
+                        XCTAssertEqual(initState.name, "")
+                        initState.name = "newName"
+                    }
             }
         }
         
-        let initView = InitView()
-        XCTAssertEqual(initView.initState.name, "")
+        var initStore: Store<InitViewState>? = nil
+        let initView = InitView { store in
+            if initStore == nil {
+                initStore = store
+                XCTAssertEqual(initStore?.name, "")
+            }
+        }
+        let host = ViewTest.host(initView)
         
-        let newName = "newName"
-        initView.initState.name = newName
-        XCTAssertEqual(initView.$initState.name, newName)
+        XCTAssertEqual(initStore?.name, "newName")
+        
+        ViewTest.releaseHost(host)
     }
     
     func testInitReducerViewState() {
@@ -107,13 +198,16 @@ final class ViewStateTests: XCTestCase {
         }
         
         initStateReducerCall = false
-        _ = InitView()
+        let initView = InitView()
+        let host = ViewTest.host(initView)
+        
         XCTAssert(initStateReducerCall)
+        ViewTest.releaseHost(host)
     }
     
     func testViewStateLifeCircly() {
         resetDefaultSceneState()
-        let sceneStore = SceneSharedState<Never>.getSceneStore()
+        let sceneStore = Store<SceneState>.shared
         
         ViewMonitor.shared.arrObservers = []
         class Oberver: ViewMonitorOberver {
@@ -139,11 +233,18 @@ final class ViewStateTests: XCTestCase {
         struct NormalView: View {
             @Environment(\.viewPath) var viewPath
             @ViewState var normalState = FullViewState()
+            var callback: (ViewStateWrapperStorage<FullViewState>) -> Void
             
             var body: some View {
-                Text(normalState.name)
-                Button("Random Text") {
-                    $normalState.send(action: .changeContent(String(Int.random(in: 100...999))))
+                callback(_normalState.storage)
+                return VStack {
+                    Text(normalState.name)
+                    Button("Random Text") {
+                        $normalState.send(action: .changeContent(String(Int.random(in: 100...999))))
+                    }
+                }
+                .onAppear {
+                    $normalState.send(action: .changeContent("content"))
                 }
             }
         }
@@ -153,43 +254,64 @@ final class ViewStateTests: XCTestCase {
         XCTAssert(!oberver.removeViewCall)
         XCTAssert(sceneStore.viewStateContainer.mapViewState.isEmpty)
         
-        var normalView: NormalView? = NormalView()
-        XCTAssert(oberver.addViewCall)
-        XCTAssert(!oberver.updateViewCall)
-        XCTAssert(!oberver.removeViewCall)
-        let viewStateId = ViewStateContainer.ViewStateId(viewPath: normalView!.viewPath, stateId: normalView!.normalState.stateId)
-        XCTAssert(sceneStore.viewStateContainer.mapViewState[viewStateId] != nil)
-        XCTAssertEqual((sceneStore.viewStateContainer.mapViewState[viewStateId] as! FullViewState).name, "")
+        var normalStateWrapper: ViewStateWrapperStorage<FullViewState>? = nil
         
-        let content = String(Int.random(in: 100...999))
-        normalView?.$normalState.send(action: .changeContent(content))
+        var normalView: NormalView? = NormalView { wrapper in
+            if let oldWrapper = normalStateWrapper {
+                XCTAssert(oldWrapper === wrapper)
+            } else {
+                normalStateWrapper = wrapper
+                XCTAssert(oberver.addViewCall)
+                XCTAssert(!oberver.updateViewCall)
+                XCTAssert(!oberver.removeViewCall)
+            }
+        }
+        
+        autoreleasepool {
+            let host = ViewTest.host(normalView!.environment(\.recordViewState, true))
+            
+            let viewStateId = ViewStateContainer.ViewStateId(viewPath: .init(), stateId: normalStateWrapper!.store.stateId)
+
+            XCTAssert(sceneStore.viewStateContainer.mapViewState[viewStateId] != nil)
+            XCTAssertEqual((sceneStore.viewStateContainer.mapViewState[viewStateId] as! FullViewState).name, "content")
+
+            XCTAssert(oberver.addViewCall)
+            XCTAssert(oberver.updateViewCall)
+            XCTAssert(!oberver.removeViewCall)
+            
+            ViewTest.releaseHost(host)
+            normalView = nil
+            normalStateWrapper = nil
+        }
+        
         XCTAssert(oberver.addViewCall)
         XCTAssert(oberver.updateViewCall)
-        XCTAssert(!oberver.removeViewCall)
-        XCTAssertEqual((sceneStore.viewStateContainer.mapViewState[viewStateId] as! FullViewState).name, content)
-        
-        normalView = nil
-        XCTAssert(oberver.addViewCall)
-        XCTAssert(oberver.updateViewCall)
+        // macOS VC 释放存在问题
+        #if os(iOS) || os(tvOS)
         XCTAssert(oberver.removeViewCall)
         XCTAssert(sceneStore.viewStateContainer.mapViewState.isEmpty)
+        #endif
         
         cancellable.cancel()
     }
     
+    // macOS VC 释放存在问题
+    #if os(iOS) || os(tvOS)
     func testDuplicateViewState() {
         resetDefaultSceneState()
-        let sceneStore = SceneSharedState<Never>.getSceneStore()
+        let sceneStore = Store<SceneState>.shared
         struct NormalView: View {
             @ViewState var normalState = NormalViewState()
+            var callback: (ViewStateWrapperStorage<NormalViewState>) -> Void
             
             var body: some View {
-                Text(normalState.name)
+                callback(_normalState.storage)
+                return Text(normalState.name)
             }
         }
         // 添加 A，添加 B: 重复添加
-        // 移除 A，更新 B: 不存在
-        // 移除 B: 不存在
+        // 移除 B，更新 A: 不存在
+        // 移除 A: 不存在
         ViewMonitor.shared.arrObservers = []
         class Oberver: ViewMonitorOberver {
             var addErrorCall = false
@@ -213,30 +335,42 @@ final class ViewStateTests: XCTestCase {
         let oberver = Oberver()
         let cancellable = ViewMonitor.shared.addObserver(oberver)
         
-        var firstView: NormalView? = NormalView()
-        XCTAssertEqual(sceneStore.viewStateContainer.mapViewState.keys.first!.description, "->\(firstView!.normalState.stateId)")
-        XCTAssert(!oberver.addErrorCall)
-        XCTAssert(!oberver.updateErrorCall)
-        XCTAssert(!oberver.removeErrorCall)
-        
-        var secondView: NormalView? = NormalView()
-        XCTAssert(oberver.addErrorCall)
-        XCTAssert(!oberver.updateErrorCall)
-        XCTAssert(!oberver.removeErrorCall)
-        
-        firstView = nil
-        secondView?.normalState.name = "new"
-        XCTAssert(oberver.addErrorCall)
-        XCTAssert(oberver.updateErrorCall)
-        XCTAssert(!oberver.removeErrorCall)
-        
-        secondView = nil
+        autoreleasepool {
+            var firstWrapper: ViewStateWrapperStorage<NormalViewState>? = nil
+            var firstView: NormalView? = NormalView { wrapper in
+                firstWrapper = wrapper
+            }
+            let host1 = ViewTest.host(firstView!.environment(\.recordViewState, true))
+            XCTAssertEqual(sceneStore.viewStateContainer.mapViewState.keys.first!.description, "->\(firstWrapper!.store.stateId)")
+            XCTAssert(!oberver.addErrorCall)
+            XCTAssert(!oberver.updateErrorCall)
+            XCTAssert(!oberver.removeErrorCall)
+            
+            autoreleasepool {
+                var secondView: NormalView? = NormalView { _ in }
+                let host2 = ViewTest.host(secondView!.environment(\.recordViewState, true))
+                XCTAssert(oberver.addErrorCall)
+                XCTAssert(!oberver.updateErrorCall)
+                XCTAssert(!oberver.removeErrorCall)
+                secondView = nil
+                ViewTest.releaseHost(host2)
+            }
+            firstWrapper?.store.name = "new"
+            XCTAssert(oberver.addErrorCall)
+            XCTAssert(oberver.updateErrorCall)
+            XCTAssert(!oberver.removeErrorCall)
+            
+            
+            firstView = nil
+            ViewTest.releaseHost(host1)
+        }
         XCTAssert(oberver.addErrorCall)
         XCTAssert(oberver.updateErrorCall)
         XCTAssert(oberver.removeErrorCall)
         
         cancellable.cancel()
     }
+    #endif
 }
 
 

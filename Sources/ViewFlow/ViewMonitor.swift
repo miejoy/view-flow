@@ -23,7 +23,6 @@ public protocol ViewMonitorOberver: AnyObject {
     func receiveViewEvent(_ event: ViewEvent)
 }
 
-
 /// 存储器监听器
 public final class ViewMonitor {
         

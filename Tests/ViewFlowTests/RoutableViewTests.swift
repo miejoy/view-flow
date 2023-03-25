@@ -15,6 +15,7 @@ final class RoutableViewTests: XCTestCase {
     // 暂时无法测试，后期可能用 ViewInspector 测试
     func testViewAppear() {
         let mainView = MainRouteView()
+        let host = ViewTest.host(mainView)
         let mainBody = mainView.body
 
         XCTAssert(((mainBody as? TrackWrapperView<ContentRouteView>) != nil))
@@ -23,7 +24,8 @@ final class RoutableViewTests: XCTestCase {
         let contentView = contentWrapperView.content
         let contentBody = contentView.body
         XCTAssert(((contentBody as? RouteWrapperView<Text>) != nil))
-        print(contentBody.body)
+        
+        ViewTest.releaseHost(host)
     }
     
     func testDefaultRoute() {

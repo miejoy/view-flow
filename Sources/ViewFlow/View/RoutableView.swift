@@ -30,6 +30,7 @@ extension RoutableView {
 struct RouteWrapperView<Content: View> : View {
     
     @Environment(\.viewPath) var viewPath
+    @Environment(\.sceneId) var sceneId
     var trackId: String
     
     @ViewBuilder var content: Content
@@ -38,10 +39,10 @@ struct RouteWrapperView<Content: View> : View {
         return self.content
             .environment(\.viewPath, viewPath.appendPath(trackId))
             .onDisappear {
-                Store<SceneState>.curSceneStore.send(action: .onDisappear(viewPath.appendPath(trackId)))
+                Store<SceneState>.shared(on: sceneId).send(action: .onDisappear(viewPath.appendPath(trackId)))
             }
             .onAppear {
-                Store<SceneState>.curSceneStore.send(action: .onAppear(viewPath.appendPath(trackId)))
+                Store<SceneState>.shared(on: sceneId).send(action: .onAppear(viewPath.appendPath(trackId)))
             }
     }
 }

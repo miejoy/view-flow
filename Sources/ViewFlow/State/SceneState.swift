@@ -14,14 +14,6 @@ public enum SceneId: CustomStringConvertible, Hashable {
     case main
     case custom(String)
     
-    public init(_ rawValue: String) {
-        if rawValue == "main" {
-            self = .main
-        } else {
-            self = .custom(rawValue)
-        }
-    }
-    
     public var description: String {
         switch self {
         case .main:

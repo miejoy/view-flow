@@ -20,7 +20,6 @@ final class TrackableViewTests: XCTestCase {
         XCTAssert(((mainBody as? TrackWrapperView<ContentView>) != nil))
         
         let contentWrapperView = mainBody as! TrackWrapperView<ContentView>
-        print(type(of: contentWrapperView.body))
         let contentView = contentWrapperView.content
         let contentBody = contentView.body
         XCTAssert(((contentBody as? TrackWrapperView<Text>) != nil))

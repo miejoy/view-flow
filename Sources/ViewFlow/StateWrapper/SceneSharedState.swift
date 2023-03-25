@@ -18,44 +18,82 @@ public protocol SceneSharableState: SharableState where UpState: SceneSharableSt
 /// 完整的 scene 下可共享状态
 public protocol FullSceneSharableState: SceneSharableState, ReducerLoadableState, ActionBindable {}
 
+/**
+ DynamicProperty 中 update() 方法虽然是 mutating，但是在这里修改 struct，不会影响原本的 struct
+ 这里只能用 struct，使用 class 界面似乎不会更新
+ */
 
+/// 场景内共享状态包装器
 @propertyWrapper
-public struct SceneSharedState<State: SceneSharableState> : DynamicProperty {
-    
-    @ObservedObject private var store: Store<State>
+public struct SceneSharedState<State: SceneSharableState>: DynamicProperty {
 
-    static func getSceneStore() -> Store<SceneState> {
-        Store<SceneState>.curSceneStore
-    }
+    /// 内部存储
+    @ObservedObject
+    var storage: SceneSharedStateWrapperStorage<State> = .init()
     
-    public init() {
-        store = Store<SceneState>.curSceneStore.state.getSharedStore(of: State.self)
-    }
+    @Environment(\.sceneId)
+    var sceneId
+
+    public init() {}
     
     public var wrappedValue: State {
         get {
-            store.state
+            if let store = storage.store {
+                return store.state
+            }
+            fatalError("Can't get state before update() get call")
         }
-        
+
         nonmutating set {
-            store.state = newValue
+            if let store = storage.store {
+                store.state = newValue
+            } else {
+                fatalError("Can't set state before update() get call")
+            }
         }
     }
     
     public var projectedValue: Store<State> {
-        store
+        if let store = storage.store {
+            return store
+        }
+        fatalError("Can't get projectedValue before update() get call")
     }
-}
-
-extension SceneSharedState where State : ReducerLoadableState {
-    public init() {
-        store = Self.getSceneStore().state.getSharedStore(of: State.self)
-        if !(State.self is SceneState.Type) {
-            // 这里有可能获取 SceneStore ，需要屏蔽一下
-            State.loadReducers(on: store)
+    
+    public func update() {
+        if storage.store == nil {
+            storage.configStoreIfNeed(sceneId)
         }
     }
 }
+
+// MARK: - SceneSharedStateWrapperStorage
+
+/// 场景共享状态包装器对应存储器，暂时只在内部使用
+final class SceneSharedStateWrapperStorage<State: SceneSharableState>: ObservableObject {
+    
+    @Published
+    var refreshTrigger: Bool = false
+    var store: Store<State>? = nil
+    
+    var cancellable: AnyCancellable? = nil
+        
+    func configStoreIfNeed(_ sceneId: SceneId) {
+        if store == nil {
+            let newStore = initStore(sceneId)
+            self.cancellable = newStore.addObserver { [weak self] new, old in
+                self?.refreshTrigger.toggle()
+            }
+            self.store = newStore
+        }
+    }
+    
+    func initStore(_ sceneId: SceneId) -> Store<State> {
+        Store<SceneState>.shared(on: sceneId).state.getSharedStore(of: State.self)
+    }
+}
+
+// MARK: - SceneSharedStoreContainer
 
 extension SceneState {
     /// 当前场景可共享状态的 Store 存储器
