@@ -89,7 +89,7 @@ final class SceneSharedStateWrapperStorage<State: SceneSharableState>: Observabl
     }
     
     func initStore(_ sceneId: SceneId) -> Store<State> {
-        Store<SceneState>.shared(on: sceneId).state.getSharedStore(of: State.self)
+        Store<State>.shared(on: sceneId)
     }
 }
 

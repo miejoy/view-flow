@@ -121,9 +121,14 @@ extension Store where State: ActionBindable {
 }
 
 extension Store where State: SceneSharableState {
-    // 默认读取 主场景
+    // 共享状态存储器，读取主场景的
     public static var shared: Store<State> {
         Store<AllSceneState>.shared.sceneStore().state.getSharedStore(of: State.self)
+    }
+    
+    // 对应场景共享状态存储区
+    public static func shared(on sceneId: SceneId) -> Store<State> {
+        Store<AllSceneState>.shared.sceneStore(of: sceneId).state.getSharedStore(of: State.self)
     }
 }
 
