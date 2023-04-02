@@ -34,7 +34,7 @@ public struct AnyViewRoute: Hashable {
     public var anyHash: AnyHashable
     
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(hashValue)
+        hasher.combine(anyHash)
     }
     
     init<InitData>(route: ViewRoute<InitData>) {
