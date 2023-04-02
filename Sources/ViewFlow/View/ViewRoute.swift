@@ -25,18 +25,22 @@ public struct ViewRoute<InitData>: Hashable, CustomStringConvertible {
 }
 
 /// 抹除初始化类型的界面对应路由标识
-public struct AnyViewRoute: Equatable {
+public struct AnyViewRoute: Hashable {
     
     public var initDataType: Any.Type
     
     public var routeId: String
     
-    public var hashValue: AnyHashable
+    public var anyHash: AnyHashable
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(hashValue)
+    }
     
     init<InitData>(route: ViewRoute<InitData>) {
         self.initDataType = InitData.self
         self.routeId = route.routeId
-        self.hashValue = AnyHashable(route)
+        self.anyHash = AnyHashable(route)
     }
     
     func equelToRoute<InitData>(_ route: ViewRoute<InitData>) -> Bool {
@@ -44,7 +48,7 @@ public struct AnyViewRoute: Equatable {
     }
     
     public static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.hashValue == rhs.hashValue
+        lhs.anyHash == rhs.anyHash
     }
     
     public var description: String {
