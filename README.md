@@ -39,7 +39,10 @@ ViewFlow 是自定义 RSV(Resource & State & View) 设计模式中 State 层的�
   - RoutableView: 可路由的界面协议
   - VoidRoutableView: 可无参数路由的界面协议
 
-- ViewRoute: 界面路由标识，每个可路由界面都有一个默认的路由标识，其他的库可以用这个来注册和管理路由界面
+- 界面路由
+  - ViewRoute: 界面路由标识，每个可路由界面都有一个默认的路由标识，其他的库可以用这个来注册和管理路由界面
+  - AnyViewRoute: 抹除初始化类型的界面对应路由标识
+  - ViewRouteData: 包含数据的界面路由，这个包含了初始化界面需要的所有内容
 
 ### 各种 State 对应关系如下：
 

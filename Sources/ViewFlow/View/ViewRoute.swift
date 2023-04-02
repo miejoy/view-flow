@@ -24,13 +24,14 @@ public struct ViewRoute<InitData>: Hashable, CustomStringConvertible {
     }
 }
 
+/// 抹除初始化类型的界面对应路由标识
 public struct AnyViewRoute: Equatable {
     
-    var initDataType: Any.Type
+    public var initDataType: Any.Type
     
-    var routeId: String
+    public var routeId: String
     
-    var hashValue: AnyHashable
+    public var hashValue: AnyHashable
     
     init<InitData>(route: ViewRoute<InitData>) {
         self.initDataType = InitData.self
@@ -51,9 +52,42 @@ public struct AnyViewRoute: Equatable {
     }
 }
 
+/// 包含数据的界面路由，这个包含了初始化界面需要的所有内容
+public struct ViewRouteData {
+    
+    public let route: AnyViewRoute
+    
+    public let initData: Any
+    
+    init(route: AnyViewRoute, initData: Any) {
+        self.initData = initData
+        self.route = route
+    }
+        
+    init<InitData>(route: ViewRoute<InitData>, data: InitData) {
+        self.init(route: route.eraseToAnyRoute(), initData: data)
+    }
+}
+
 extension ViewRoute {
     public func eraseToAnyRoute() -> AnyViewRoute {
         .init(route: self)
+    }
+    
+    /// 包装成完整路由
+    public func wrapper(_ data: InitData) -> ViewRouteData {
+        .init(route: self, data: data)
+    }
+}
+
+extension AnyViewRoute {
+    /// 包装成完整路由，如果传入的数据类型不是初始化的数据类型，会返回 nil
+    public func wrapper(_ data: Any) -> ViewRouteData? {
+        guard type(of: data) == self.initDataType else {
+            ViewMonitor.shared.record(event: .wrapperRouteDataFailed(route: self, data: data))
+            return nil
+        }
+        return .init(route: self, initData: data)
     }
 }
 

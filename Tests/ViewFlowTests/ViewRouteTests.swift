@@ -42,5 +42,30 @@ final class ViewRouteTests: XCTestCase {
         
         XCTAssertNotEqual(route1, route2)
     }
+    
+    func testRouteWrapperData() {
+        let rightData: String = "test"
+        let route = ViewRoute<String>(routeId: s_defaultViewRouteId)
+        
+        let routeData = route.wrapper(rightData)
+        XCTAssertEqual(routeData.initData as? String, rightData)
+        XCTAssertEqual(routeData.route, route.eraseToAnyRoute())
+    }
+    
+    func testAnyRouteWrapperData() {
+        let rightData: String = "test"
+        let rightAnyData: Any = rightData
+        let wrongData: Any = Int(1)
+        let route = ViewRoute<String>(routeId: s_defaultViewRouteId)
+        let anyRoute = route.eraseToAnyRoute()
+        
+        let anyRouteData1 = anyRoute.wrapper(rightData)
+        let anyRouteData2 = anyRoute.wrapper(rightAnyData)
+        let anyRouteData3 = anyRoute.wrapper(wrongData)
+        
+        XCTAssertEqual(anyRouteData1?.initData as? String, rightData)
+        XCTAssertEqual(anyRouteData2?.initData as? String, rightData)
+        XCTAssertNil(anyRouteData3)
+    }
 }
 

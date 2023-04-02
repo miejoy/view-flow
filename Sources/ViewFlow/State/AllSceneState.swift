@@ -23,7 +23,7 @@ struct AllSceneState: FullSharableState {
     static func loadReducers(on store: Store<AllSceneState>) {
         store.registerDefault { state, action in
             switch action {
-            case let .addSceneStore( sceneId, sceneStore):
+            case let .addSceneStore(sceneId, sceneStore):
                 state.allSceneStorage[sceneId] = sceneStore
             }
         }
