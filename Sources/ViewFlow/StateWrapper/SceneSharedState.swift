@@ -13,10 +13,19 @@ import DataFlow
 /// 同 scene 下可共享的状态
 public protocol SceneSharableState: SharableState where UpState: SceneSharableState {
     associatedtype UpState = SceneState
+    
+    init(on sceneId: SceneId)
 }
 
 /// 完整的 scene 下可共享状态
 public protocol FullSceneSharableState: SceneSharableState, ReducerLoadableState, ActionBindable {}
+
+extension SceneSharableState {
+    /// 默认调用无参数初始化方法
+    public init(on sceneId: SceneId) {
+        self.init()
+    }
+}
 
 /**
  DynamicProperty 中 update() 方法虽然是 mutating，但是在这里修改 struct，不会影响原本的 struct
@@ -140,7 +149,7 @@ final class SceneSharedStoreContainer {
             }
             fatalError("Get scene store failed")
         }
-        let store = Store<State>()
+        let store = Store<State>.box(State(on: sceneId))
         // 判断 upStore 是否添加了当前的状态
         if !(State.UpState.self is Never.Type) {
             let upStore = self.getSharedStore(of: State.UpState.self)

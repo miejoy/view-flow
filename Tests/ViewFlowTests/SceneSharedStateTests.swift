@@ -200,6 +200,35 @@ final class SceneSharedStateTests: XCTestCase {
         
         cancellable.cancel()
     }
+    
+    func testSaveSceneIdSharedState() {
+        resetDefaultSceneState()
+        
+        struct SaveSceneIdView: View {
+            
+            @SceneSharedState var state: SaveSceneSharedStata
+            var callback: (SceneSharedStateWrapperStorage<SaveSceneSharedStata>) -> Void
+            
+            var body: some View {
+                callback(_state.storage)
+                return Text("text")
+            }
+        }
+        
+        let sceneId: SceneId = .custom("TestSaveScene")
+        var stateWrapper: SceneSharedStateWrapperStorage<SaveSceneSharedStata>? = nil
+        
+        let view = SaveSceneIdView {
+            stateWrapper = $0
+        }.environment(\.sceneId, sceneId)
+        
+        let host = ViewTest.host(view)
+        
+        XCTAssertNotNil(stateWrapper)
+        XCTAssertEqual(stateWrapper?.store?.state.sceneId, sceneId)
+        
+        ViewTest.refreshHost(host)
+    }
 }
 
 struct NormalSharedState: SceneSharableState {
@@ -280,4 +309,17 @@ struct RefreshContainSharedView: View {
 
 struct ContainSharedState: SceneSharableState {
     var refreshTrigger: Bool = false
+}
+
+struct SaveSceneSharedStata: SceneSharableState {
+    
+    let sceneId: SceneId
+    
+    init() {
+        self.init(on: .main)
+    }
+    
+    init(on sceneId: SceneId) {
+        self.sceneId = sceneId
+    }
 }
