@@ -89,25 +89,26 @@ final class SceneStateTests: XCTestCase {
         let secondPath = ViewPath(arrPaths: firstPath.arrPaths, "SecondView")
         let thirdPath = ViewPath(arrPaths: firstPath.arrPaths, "ThirdView")
         XCTAssert(sceneStore.arrAppearViewPath.isEmpty)
+        let testView = ContentRouteView()
         
-        sceneStore.send(action: .onAppear(firstPath))
+        sceneStore.send(action: .onAppear(testView, firstPath))
         XCTAssertEqual(sceneStore.arrAppearViewPath.count, 1)
         XCTAssertEqual(sceneStore.arrAppearViewPath[0].description, firstPath.description)
         
-        sceneStore.send(action: .onAppear(secondPath))
+        sceneStore.send(action: .onAppear(testView, secondPath))
         XCTAssertEqual(sceneStore.arrAppearViewPath.count, 2)
         XCTAssertEqual(sceneStore.arrAppearViewPath[0].description, secondPath.description)
         
-        sceneStore.send(action: .onAppear(thirdPath))
+        sceneStore.send(action: .onAppear(testView, thirdPath))
         XCTAssertEqual(sceneStore.arrAppearViewPath.count, 3)
         XCTAssertEqual(sceneStore.arrAppearViewPath[0].description, thirdPath.description)
         
-        sceneStore.send(action: .onDisappear(secondPath))
+        sceneStore.send(action: .onDisappear(testView, secondPath))
         XCTAssertEqual(sceneStore.arrAppearViewPath.count, 2)
         XCTAssertEqual(sceneStore.arrAppearViewPath[0].description, thirdPath.description)
         XCTAssertEqual(sceneStore.arrAppearViewPath[1].description, firstPath.description)
         
-        sceneStore.send(action: .onDisappear(thirdPath))
+        sceneStore.send(action: .onDisappear(testView, thirdPath))
         XCTAssertEqual(sceneStore.arrAppearViewPath.count, 1)
         XCTAssertEqual(sceneStore.arrAppearViewPath[0].description, firstPath.description)
     }

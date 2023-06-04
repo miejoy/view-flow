@@ -11,8 +11,8 @@ import Combine
 
 /// 存储器变化事件
 public enum ViewEvent {
-    case viewDidAppear(viewPath: ViewPath, scene: SceneState)
-    case viewDidDisappear(viewPath: ViewPath, scene: SceneState)
+    case viewDidAppear(view: any RoutableView, viewPath: ViewPath, scene: SceneState)
+    case viewDidDisappear(view: any RoutableView, viewPath: ViewPath, scene: SceneState)
     case addViewState(state: any StorableViewState, viewPath: ViewPath, scene: SceneState)
     case updateViewState(state: any StorableViewState, viewPath: ViewPath, scene: SceneState)
     case removeViewState(state: any StorableViewState, viewPath: ViewPath, scene: SceneState)

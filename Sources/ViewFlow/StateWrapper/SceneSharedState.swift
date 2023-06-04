@@ -159,7 +159,7 @@ final class SceneSharedStoreContainer {
                     "with stateId[\(store.state.stateId)] failed: " +
                     "exist State[\(String(describing: type(of: existState)))] with same stateId!")
             }
-            upStore.append(subStore: store)
+            upStore.add(subStore: store)
         }
         
         mapExistSharedStore[key] = store.eraseToAnyStore()

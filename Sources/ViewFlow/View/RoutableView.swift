@@ -18,7 +18,7 @@ public protocol VoidRoutableView: RoutableView, VoidInitializableView {
 
 extension RoutableView {
     public var body: some View {
-        RouteWrapperView(trackId: trackId) {
+        RouteWrapperView(trackId: trackId, view: self) {
             self.content
         }
     }
@@ -31,7 +31,8 @@ struct RouteWrapperView<Content: View> : View {
     
     @Environment(\.viewPath) var viewPath
     @Environment(\.sceneId) var sceneId
-    var trackId: String
+    let trackId: String
+    let view: any RoutableView
     
     @ViewBuilder var content: Content
 
@@ -39,10 +40,10 @@ struct RouteWrapperView<Content: View> : View {
         return self.content
             .environment(\.viewPath, viewPath.appendPath(trackId))
             .onDisappear {
-                Store<SceneState>.shared(on: sceneId).send(action: .onDisappear(viewPath.appendPath(trackId)))
+                Store<SceneState>.shared(on: sceneId).send(action: .onDisappear(view, viewPath.appendPath(trackId)))
             }
             .onAppear {
-                Store<SceneState>.shared(on: sceneId).send(action: .onAppear(viewPath.appendPath(trackId)))
+                Store<SceneState>.shared(on: sceneId).send(action: .onAppear(view, viewPath.appendPath(trackId)))
             }
     }
 }

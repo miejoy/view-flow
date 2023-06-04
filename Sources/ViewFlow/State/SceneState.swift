@@ -26,8 +26,8 @@ public enum SceneId: CustomStringConvertible, Hashable {
 
 /// 场景事件
 public enum SceneAction: Action {
-    case onAppear(ViewPath)
-    case onDisappear(ViewPath)
+    case onAppear(any RoutableView, ViewPath)
+    case onDisappear(any RoutableView, ViewPath)
 }
 
 /// 场景状态
@@ -77,18 +77,18 @@ extension SceneState: ReducerLoadableState {
         
         store.registerDefault { state, action in
             switch action {
-            case .onAppear(let viewPath):
+            case .onAppear(let view, let viewPath):
                 // 找的当前 view 的 父 view
                 let index = state.arrAppearViewPath.firstIndex { item in
                     !(item.isSubPath(of: viewPath))
                 } ?? 0
                 state.arrAppearViewPath.insert(viewPath, at: index)
-                ViewMonitor.shared.record(event: .viewDidAppear(viewPath: viewPath, scene: state))
-            case .onDisappear(let viewPath):
+                ViewMonitor.shared.record(event: .viewDidAppear(view: view, viewPath: viewPath, scene: state))
+            case .onDisappear(let view, let viewPath):
                 if let index = state.arrAppearViewPath.firstIndex(where: { $0 == viewPath }) {
                     state.arrAppearViewPath.remove(at: index)
                 }
-                ViewMonitor.shared.record(event: .viewDidDisappear(viewPath: viewPath, scene: state))
+                ViewMonitor.shared.record(event: .viewDidDisappear(view: view, viewPath: viewPath, scene: state))
             }
         }
     }
