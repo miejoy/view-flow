@@ -11,7 +11,7 @@ import SwiftUI
 import DataFlow
 
 /// 同 scene 下可共享的状态
-public protocol SceneSharableState: SharableState where UpState: SceneSharableState {
+public protocol SceneSharableState: AttachableState, InitializableState where UpState: SceneSharableState {
     associatedtype UpState = SceneState
     
     init(on sceneId: SceneId)

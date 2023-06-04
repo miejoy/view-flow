@@ -25,6 +25,7 @@ ViewFlow 是自定义 RSV(Resource & State & View) 设计模式中 State 层的�
   - StorableViewState: 界面使用的可存储状态
 
 - State 的包装器:
+  - SharedState: 对全局可共享状态(SharableState)的包装器，包装的 Store 会存在全局静态变量中
   - SceneSharedState: 对当前场景内的可共享状态(SceneSharableState)的包装器，包装的 Store 和 State 都会存储在当前 SceneState 中
   - ViewState: 界面状态(StorableViewState)包装器，包装的 State 回直接存储到当前 SceneState 中
   

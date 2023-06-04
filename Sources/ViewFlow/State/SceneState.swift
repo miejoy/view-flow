@@ -68,11 +68,11 @@ extension SceneState: ReducerLoadableState {
             return
         }
         upStore.state.subStates[sceneIdStr] = store.state
-        upStore.observe(store: store) { newState, _ in
-            Store<AllSceneState>.shared.subStates[sceneIdStr] = newState
+        upStore.observe(store: store) { [weak upStore] newState, _ in
+            upStore?.subStates[sceneIdStr] = newState
         }
-        store.setDestroyCallback { state in
-            Store<AllSceneState>.shared.subStates.removeValue(forKey: sceneIdStr)
+        store.setDestroyCallback { [weak upStore] state in
+            upStore?.subStates.removeValue(forKey: sceneIdStr)
         }
         
         store.registerDefault { state, action in
