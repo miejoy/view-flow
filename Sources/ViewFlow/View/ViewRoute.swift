@@ -8,14 +8,11 @@
 
 import Foundation
 
-/// 默认展示界面路由 ID
-public let s_defaultViewRouteId = "__default__"
-
 /// 界面对应路由标识
 public struct ViewRoute<InitData>: Hashable, CustomStringConvertible {
     var routeId: String
     
-    public init(routeId: String = s_defaultViewRouteId) {
+    public init(_ routeId: String) {
         self.routeId = routeId
     }
     

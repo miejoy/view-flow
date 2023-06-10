@@ -7,28 +7,162 @@
 
 import DataFlow
 import SwiftUI
+import Combine
+
+/**
+ DynamicProperty 中 update() 方法虽然是 mutating，但是在这里修改 struct，不会影响原本的 struct
+ 这里只能用 struct，使用 class 界面似乎不会更新
+ */
 
 /// 共享状态包装器
 @propertyWrapper
 public struct SharedState<State: SharableState>: DynamicProperty {
     
-    @ObservedObject private var store: Store<State>
+    /// 内部存储
+    @ObservedObject
+    var storage: SharedStoreStorage<State>
+        
+    @Environment(\.sceneId)
+    var sceneId
     
     public init() {
-        store = .shared
+        storage = .init { _ in .shared }
+        storage.configStoreIfNeed(.main)
     }
     
     public var wrappedValue: State {
         get {
-            store.state
+            if let store = storage.store {
+                return store.state
+            }
+            ViewMonitor.shared.fatalError("Can't get state before update() get call")
+            return .init()
         }
-        
+
         nonmutating set {
-            store.state = newValue
+            if let store = storage.store {
+                store.state = newValue
+            } else {
+                ViewMonitor.shared.fatalError("Can't set state before update() get call")
+            }
         }
     }
     
     public var projectedValue: Store<State> {
-        store
+        if let store = storage.store {
+            return store
+        }
+        ViewMonitor.shared.fatalError("Can't get projectedValue before update() get call")
+        return .init()
+    }
+    
+    mutating public func update() {
+        if storage.store == nil {
+            storage.configStoreIfNeed(sceneId)
+        }
+    }
+}
+
+
+// MARK: - SharedStoreStorage
+
+/// 场景共享状态包装器对应存储器，暂时只在内部使用
+final class SharedStoreStorage<State: SharableState>: ObservableObject {
+    
+    @Published
+    var refreshTrigger: Bool = false
+    var store: Store<State>? = nil
+    
+    var cancellable: AnyCancellable? = nil
+    
+    var makeStore: (_ sceneId: SceneId) -> Store<State>
+    
+    init(makeStore: @escaping (_ sceneId: SceneId) -> Store<State>) {
+        self.makeStore = makeStore
+    }
+    
+    @inlinable
+    func configStoreIfNeed(_ sceneId: SceneId) {
+        if store == nil {
+            let newStore = makeStore(sceneId)
+            self.cancellable = newStore.addObserver { [weak self] new, old in
+                self?.refreshTrigger.toggle()
+            }
+            self.store = newStore
+        }
+    }
+}
+
+// MARK: - SceneSharableState
+
+extension SharedState where State: SceneSharableState {
+    public init() {
+        storage = .init { Store<State>.shared(on: $0) }
+    }
+}
+
+// MARK: - SceneSharedStoreContainer
+
+extension SceneState {
+    /// 当前场景可共享状态的 Store 存储器
+    @usableFromInline
+    var sharedStoreContainer: SceneSharedStoreContainer {
+        self.storage[SceneSharedStoreContainerKey.self]
+    }
+    
+    /// 获取当前 Scene 共享的状态
+    @usableFromInline
+    func getSharedStore<State: SceneSharableState>(of stateType: State.Type) -> Store<State> {
+        return sharedStoreContainer.getSharedStore(of: State.self)
+    }
+}
+
+struct SceneSharedStoreContainerKey: SceneStorageKey {
+    static func defaultValue(on sceneStore: Store<SceneState>?) -> SceneSharedStoreContainer {
+        return .init(sceneStore: sceneStore)
+    }
+}
+
+/// 自定义 store 存储器，scene 中的共享 store 需要有地方保存
+@usableFromInline
+final class SceneSharedStoreContainer {
+    let sceneId: SceneId
+    var mapExistSharedStore: [ObjectIdentifier:AnyStore] = [:]
+    weak var sceneStore: Store<SceneState>?
+    
+    init(sceneStore: Store<SceneState>?) {
+        self.sceneId = sceneStore?.sceneId ?? .main
+        self.mapExistSharedStore = [:]
+        self.sceneStore = sceneStore
+    }
+    
+    func getSharedStore<State: SceneSharableState>(of stateType: State.Type) -> Store<State> {
+        let key = ObjectIdentifier(State.self)
+        if let store = mapExistSharedStore[key]?.value as? Store<State> {
+            return store
+        }
+        // 一直向上会获取到 sceneStore，这里需要截断
+        if State.self is SceneState.Type {
+            if let theStore = sceneStore as? Store<State> {
+                return theStore
+            }
+            ViewMonitor.shared.fatalError("Get scene store failed")
+            return .init()
+        }
+        let store = Store<State>.box(State(on: sceneId))
+        mapExistSharedStore[key] = store.eraseToAnyStore()
+        
+        // 判断 upStore 是否添加了当前的状态
+        if !(State.UpState.self is Never.Type) {
+            let upStore = self.getSharedStore(of: State.UpState.self)
+            if let existState = upStore.subStates[store.state.stateId] {
+                ViewMonitor.shared.fatalError(
+                    "Attach State[\(String(describing: State.self))] to UpState[\(String(describing: State.UpState.self))] " +
+                    "with stateId[\(store.state.stateId)] failed: " +
+                    "exist State[\(String(describing: type(of: existState)))] with same stateId!")
+            }
+            upStore.add(subStore: store)
+        }
+        return store
     }
 }

@@ -11,6 +11,7 @@ import DataFlow
 
 enum AllSceneAction: Action {
     case addSceneStore(_ sceneId: SceneId, _ sceneStore:Store<SceneState>)
+    case removeSceneStore(_ sceneId: SceneId)
 }
 
 ///  所有场景状态
@@ -25,6 +26,8 @@ struct AllSceneState: FullSharableState {
             switch action {
             case let .addSceneStore(sceneId, sceneStore):
                 state.allSceneStorage[sceneId] = sceneStore
+            case let .removeSceneStore(sceneId):
+                state.allSceneStorage.removeValue(forKey: sceneId)
             }
         }
     }

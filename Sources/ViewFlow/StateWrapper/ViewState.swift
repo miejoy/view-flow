@@ -10,9 +10,6 @@ import SwiftUI
 import DataFlow
 import Combine
 
-/// 可存储的界面状态
-public protocol StorableViewState: AttachableState where UpState == SceneState {}
-public protocol FullStorableViewState: StorableViewState, ReducerLoadableState, ActionBindable {}
 
 @propertyWrapper
 public struct ViewState<State: StorableViewState> : DynamicProperty {

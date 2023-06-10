@@ -23,10 +23,10 @@ ViewFlow 是自定义 RSV(Resource & State & View) 设计模式中 State 层的�
   - SceneSharableState: 当前界面场景的可共享状态
   - FullSceneSharableState: 完整的界面场景可共享状态
   - StorableViewState: 界面使用的可存储状态
+  - FullStorableViewState: 完整的界面使用的可存储状态
 
 - State 的包装器:
-  - SharedState: 对全局可共享状态(SharableState)的包装器，包装的 Store 会存在全局静态变量中
-  - SceneSharedState: 对当前场景内的可共享状态(SceneSharableState)的包装器，包装的 Store 和 State 都会存储在当前 SceneState 中
+  - SharedState: 对全局可共享状态(SharableState)的包装器，包装的 Store 会存在全局静态变量中，如果是 SceneSharableState，包装的 Store 和 State 都会存储在当前 SceneState 中
   - ViewState: 界面状态(StorableViewState)包装器，包装的 State 回直接存储到当前 SceneState 中
   
 - 定义必要的 State:
@@ -53,12 +53,12 @@ subgraph AppState
 end
 AppState --> SharedState
 subgraph SharedState[SharableState]
+OtherSharedState
 AllSceneState
-OtheSharedState
-end
 AllSceneState --> SceneState
 subgraph SceneSharedState[SceneSharableState]
-SceneState --> OtheSceneSharedState
+SceneState --> OtherSceneSharedState
+end
 end
 SceneState --> ViewState
 subgraph ViewState[StorableViewState]
@@ -104,7 +104,7 @@ import SwiftUI
 
 struct NormalSharedView: View {
     
-    @SceneSharedState var normalState: NormalSharedState
+    @SharedState var normalState: NormalSharedState
     
     var body: some View {
         Text(normalState.name)
@@ -153,7 +153,7 @@ import SwiftUI
 
 struct MainSceneView: View {
     
-    @SceneSharedState var sceneState: SceneState
+    @SharedState var sceneState: SceneState
     
     var body: some View {
         ZStack(alignment: .top) {

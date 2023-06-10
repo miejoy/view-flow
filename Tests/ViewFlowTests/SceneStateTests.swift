@@ -13,6 +13,7 @@ import DataFlow
 final class SceneStateTests: XCTestCase {
     
     func resetAllSceneState() {
+        Store<AllSceneState>.shared.allSceneStorage = [:]
         Store<AllSceneState>.shared.subStates = [:]
     }
     
@@ -56,7 +57,7 @@ final class SceneStateTests: XCTestCase {
     // 目前不可能出现同一个 SceneId 重复注册的情况
 //    func testTwoSceneWithSameSceneId() {
 //        resetDefaultSceneState()
-//        let sceneStore = SceneSharedState<Never>.getSceneStore()
+//        let sceneStore = SharedState<Never>.getSceneStore()
 //        let mainSceneId: SceneId = .main
 //        XCTAssertEqual(sceneStore.sceneId, mainSceneId)
 //        
@@ -88,7 +89,7 @@ final class SceneStateTests: XCTestCase {
         let firstPath = ViewPath(arrPaths: [], "MainView")
         let secondPath = ViewPath(arrPaths: firstPath.arrPaths, "SecondView")
         let thirdPath = ViewPath(arrPaths: firstPath.arrPaths, "ThirdView")
-        XCTAssert(sceneStore.arrAppearViewPath.isEmpty)
+        XCTAssertEqual(sceneStore.arrAppearViewPath.count, 0)
         let testView = ContentRouteView()
         
         sceneStore.send(action: .onAppear(testView, firstPath))
@@ -111,5 +112,24 @@ final class SceneStateTests: XCTestCase {
         sceneStore.send(action: .onDisappear(testView, thirdPath))
         XCTAssertEqual(sceneStore.arrAppearViewPath.count, 1)
         XCTAssertEqual(sceneStore.arrAppearViewPath[0].description, firstPath.description)
+    }
+    
+    func testSceneStoreDestroy() {
+        resetAllSceneState()
+        let allSceneStore = Store<AllSceneState>.shared
+        var sceneStore: Store<SceneState>? = nil
+        sceneStore = Store<SceneState>.shared
+        
+        XCTAssertEqual(allSceneStore.allSceneStorage.count, 1)
+        XCTAssertTrue(allSceneStore.allSceneStorage[.main] === sceneStore)
+        XCTAssertEqual(allSceneStore.subStates.count, 1)
+        
+        allSceneStore.apply(action: .removeSceneStore(.main))
+        
+        XCTAssertEqual(allSceneStore.allSceneStorage.count, 0)
+        XCTAssertEqual(allSceneStore.subStates.count, 1)
+        
+        sceneStore = nil
+        XCTAssertEqual(allSceneStore.subStates.count, 0)
     }
 }

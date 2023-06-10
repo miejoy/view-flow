@@ -16,7 +16,7 @@ class SharedStateTests: XCTestCase {
         s_mapSharedStore.removeAll()
         let view = NormalSharedView()
         XCTAssertEqual(view.normalState.name, "")
-        XCTAssertEqual(Store<NormalSharedState>.shared.name, "")
+        XCTAssertEqual(Store<TextSharedState>.shared.name, "")
         
         _ = view.body
         let content = "content"
