@@ -43,7 +43,8 @@ public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
     
     public var subStates: [String : StorableState] = [:]
     
-    var storage: SceneStorage
+    /// 当前场景的数据存储器，其他模块可以使用这个存储器保持自己的数据
+    public var storage: SceneStorage
     
     public init() {
         self.init(.main)
@@ -98,8 +99,8 @@ extension SceneState: ReducerLoadableState {
 extension Never : SceneSharableState {}
 
 /// 场景容器，各子功能可用它存在数据
-final class SceneStorage {
-    
+public final class SceneStorage {
+    /// 当前场景的存储器
     weak var sceneStore: Store<SceneState>? = nil
     var storage: [ObjectIdentifier: Any] = [:]
     
