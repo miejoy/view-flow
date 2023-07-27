@@ -21,7 +21,7 @@ extension EnvironmentValues {
     }
     
     /// 当前 View 所在的 界面追踪路径
-    var viewPath: ViewPath {
+    public var viewPath: ViewPath {
         get { self[ViewPathKey.self] }
         set { self[ViewPathKey.self] = newValue }
     }
