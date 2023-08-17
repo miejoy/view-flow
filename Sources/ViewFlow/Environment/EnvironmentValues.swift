@@ -25,6 +25,12 @@ extension EnvironmentValues {
         get { self[ViewPathKey.self] }
         set { self[ViewPathKey.self] = newValue }
     }
+    
+    /// 建议的导航标题
+    public var suggestNavTitle: String? {
+        get { self[SuggestNavTitleKey.self] }
+        set { self[SuggestNavTitleKey.self] = newValue }
+    }
 }
 
 /// 场景 ID 对应 Key
@@ -40,4 +46,9 @@ struct RecordViewStateKey: EnvironmentKey {
 /// 获取当前 View 所在 界面追踪路径 的环境 Key
 struct ViewPathKey: EnvironmentKey {
     static var defaultValue: ViewPath = ViewPath()
+}
+
+/// 获取当前建议导航标题的 Key
+struct SuggestNavTitleKey: EnvironmentKey {
+    static var defaultValue: String? = nil
 }
