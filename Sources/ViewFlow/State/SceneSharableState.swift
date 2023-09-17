@@ -15,12 +15,30 @@ public protocol SceneSharableState: SharableState where UpState: SceneSharableSt
     init(on sceneId: SceneId)
 }
 
-/// 完整的 scene 下可共享状态
-public protocol FullSceneSharableState: SceneSharableState, ReducerLoadableState, ActionBindable {}
+/// 可以用空参数初始化的 scene 下可共享状态
+public protocol VoidSceneSharableState: SceneSharableState {}
 
-extension SceneSharableState {
-    /// 默认调用无参数初始化方法
+/// 用 sceneId 初始化的 scene 下可共享状态
+public protocol SceneWithIdSharableState: SceneSharableState {}
+
+/// 完整的 scene 下可共享状态
+public protocol FullSceneSharableState: VoidSceneSharableState, ReducerLoadableState, ActionBindable {}
+
+/// 完整用 sceneId 初始化的 scene 下可共享状态
+public protocol FullSceneWithIdSharableState: SceneWithIdSharableState, ReducerLoadableState, ActionBindable {}
+
+
+extension VoidSceneSharableState {
+    /// 使用场景 ID 初始化，默认调用无参数初始化方法
     public init(on sceneId: SceneId) {
         self.init()
+    }
+}
+
+extension SceneWithIdSharableState {
+    /// 无参数初始化方法默认用 SceneId.main 初始化，尽量不要调用到这里
+    public init() {
+        ViewMonitor.shared.record(event: .callSceneSharedStateInitWithoutSceneId(Self.self))
+        self.init(on: .main)
     }
 }

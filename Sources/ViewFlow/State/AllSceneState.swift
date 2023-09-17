@@ -38,7 +38,7 @@ extension Store where State == AllSceneState {
         if let store = state.allSceneStorage[sceneId] {
             return store
         }
-        let state = SceneState(sceneId)
+        let state = SceneState(on: sceneId)
         let store = Store<SceneState>.box(state)
         self.apply(action: .addSceneStore(sceneId, store))
         return store

@@ -17,6 +17,7 @@ public enum ViewEvent {
     case updateViewState(state: any StorableViewState, viewPath: ViewPath, scene: SceneState)
     case removeViewState(state: any StorableViewState, viewPath: ViewPath, scene: SceneState)
     case wrapperRouteDataFailed(route: AnyViewRoute, data: Any)
+    case callSceneSharedStateInitWithoutSceneId(any SceneWithIdSharableState.Type)
     case fatalError(String)
 }
 

@@ -45,7 +45,7 @@ final class SceneStateTests: XCTestCase {
         XCTAssertEqual(allSceneStore.state.subStates.count, 1)
         XCTAssert((allSceneStore.state.subStates[sceneStoreMain!.sceneId.description] != nil))
         
-        var sceneStoreSecond : Store<SceneState>? = Store<SceneState>.box(SceneState(.custom("Second")))
+        var sceneStoreSecond : Store<SceneState>? = Store<SceneState>.box(SceneState(on: .custom("Second")))
         XCTAssertEqual(allSceneStore.state.subStates.count, 2)
         XCTAssert((allSceneStore.state.subStates[sceneStoreSecond!.state.sceneId.description] != nil))
         

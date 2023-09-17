@@ -231,11 +231,11 @@ final class SceneSharedStateTests: XCTestCase {
     }
 }
 
-struct NormalSharedState: SceneSharableState {
+struct NormalSharedState: VoidSceneSharableState {
     var name: String = ""
 }
 
-struct DuplicateSharedState: SceneSharableState {
+struct DuplicateSharedState: VoidSceneSharableState {
     var name: String = ""
     
     var stateId: String = "NormalSharedState"
@@ -307,7 +307,7 @@ struct RefreshContainSharedView: View {
     }
 }
 
-struct ContainSharedState: SceneSharableState {
+struct ContainSharedState: VoidSceneSharableState {
     var refreshTrigger: Bool = false
 }
 

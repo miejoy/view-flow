@@ -47,10 +47,10 @@ public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
     public var storage: SceneStorage
     
     public init() {
-        self.init(.main)
+        self.init(on: .main)
     }
     
-    public init(_ sceneId: SceneId) {
+    public init(on sceneId: SceneId) {
         self.sceneId = sceneId
         self.storage = SceneStorage()
     }
@@ -96,7 +96,9 @@ extension SceneState: ReducerLoadableState {
 }
 
 /// 让 Never 可以作为 SceneState 的上级，而 SceneState 真实上级是 AllSceneState
-extension Never : SceneSharableState {}
+extension Never : SceneSharableState {
+    public init(on sceneId: SceneId) { self.init() }
+}
 
 /// 场景容器，各子功能可用它存在数据
 public final class SceneStorage {
