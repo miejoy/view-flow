@@ -316,10 +316,10 @@ struct SaveSceneSharedStata: SceneSharableState {
     let sceneId: SceneId
     
     init() {
-        self.init(on: .main)
+        self.init(sceneId: .main)
     }
     
-    init(on sceneId: SceneId) {
+    init(sceneId: SceneId) {
         self.sceneId = sceneId
     }
 }

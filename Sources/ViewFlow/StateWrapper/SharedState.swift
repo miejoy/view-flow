@@ -149,7 +149,7 @@ final class SceneSharedStoreContainer {
             ViewMonitor.shared.fatalError("Get scene store failed")
             return .init()
         }
-        let store = Store<State>.box(State(on: sceneId))
+        let store = Store<State>.box(State(sceneId: sceneId))
         mapExistSharedStore[key] = store.eraseToAnyStore()
         
         // 判断 upStore 是否添加了当前的状态

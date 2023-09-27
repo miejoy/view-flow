@@ -12,7 +12,7 @@ import DataFlow
 public protocol SceneSharableState: SharableState where UpState: SceneSharableState {
     associatedtype UpState = SceneState
     
-    init(on sceneId: SceneId)
+    init(sceneId: SceneId)
 }
 
 /// 可以用空参数初始化的 scene 下可共享状态
@@ -30,7 +30,7 @@ public protocol FullSceneWithIdSharableState: SceneWithIdSharableState, ReducerL
 
 extension VoidSceneSharableState {
     /// 使用场景 ID 初始化，默认调用无参数初始化方法
-    public init(on sceneId: SceneId) {
+    public init(sceneId: SceneId) {
         self.init()
     }
 }
@@ -39,6 +39,6 @@ extension SceneWithIdSharableState {
     /// 无参数初始化方法默认用 SceneId.main 初始化，尽量不要调用到这里
     public init() {
         ViewMonitor.shared.record(event: .callSceneSharedStateInitWithoutSceneId(Self.self))
-        self.init(on: .main)
+        self.init(sceneId: .main)
     }
 }
