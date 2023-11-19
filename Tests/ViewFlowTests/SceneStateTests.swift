@@ -13,7 +13,7 @@ import DataFlow
 final class SceneStateTests: XCTestCase {
     
     func resetAllSceneState() {
-        Store<AllSceneState>.shared.allSceneStorage = [:]
+        Store<AllSceneState>.shared.allSceneStorage = .init()
         Store<AllSceneState>.shared.subStates = [:]
     }
     
@@ -120,13 +120,13 @@ final class SceneStateTests: XCTestCase {
         var sceneStore: Store<SceneState>? = nil
         sceneStore = Store<SceneState>.shared
         
-        XCTAssertEqual(allSceneStore.allSceneStorage.count, 1)
-        XCTAssertTrue(allSceneStore.allSceneStorage[.main] === sceneStore)
+        XCTAssertEqual(allSceneStore.allSceneStorage.sceneIdToStoreMap.count, 1)
+        XCTAssertTrue(allSceneStore.allSceneStorage.sceneIdToStoreMap[.main] === sceneStore)
         XCTAssertEqual(allSceneStore.subStates.count, 1)
         
         allSceneStore.apply(action: .removeSceneStore(.main))
         
-        XCTAssertEqual(allSceneStore.allSceneStorage.count, 0)
+        XCTAssertEqual(allSceneStore.allSceneStorage.sceneIdToStoreMap.count, 0)
         XCTAssertEqual(allSceneStore.subStates.count, 1)
         
         sceneStore = nil

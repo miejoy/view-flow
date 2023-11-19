@@ -7,7 +7,7 @@
 
 import XCTest
 import SwiftUI
-import DataFlow
+@testable import DataFlow
 @testable import ViewFlow
 import XCTViewFlow
 
@@ -182,7 +182,7 @@ final class SceneSharedStateTests: XCTestCase {
             var duplicateFatalErrorCall = false
             func receiveViewEvent(_ event: ViewEvent) {
                 if case .fatalError(let message) = event,
-                    message == ("Attach State[DuplicateSharedState] to UpState[SceneState] " +
+                    message == ("Attach SceneSharableState[DuplicateSharedState] to UpState[SceneState] " +
                                 "with stateId[NormalSharedState] failed: " +
                                 "exist State[NormalSharedState] with same stateId!") {
                     duplicateFatalErrorCall = true
@@ -228,6 +228,44 @@ final class SceneSharedStateTests: XCTestCase {
         XCTAssertEqual(stateWrapper?.store?.state.sceneId, sceneId)
         
         ViewTest.refreshHost(host)
+    }
+    
+    func testCreateSceneSharedStoreOnMultiThread() {
+        resetDefaultSceneState()
+        s_mapSharedStore.removeAll()
+        
+        var expectations: [XCTestExpectation] = []
+        var count: Int = 0
+        
+        (0..<5).forEach { _ in
+            let expectation = expectation(description: "This should complete")
+            expectations.append(expectation)
+            DispatchQueue.global().async {
+                if (s_mapSharedStore[ObjectIdentifier(AllSceneState.self)] == nil) {
+                    sleep(1)
+                    
+                    _ = Store<MultiThreadSharedState>.shared
+                    
+                    XCTAssertNotNil(s_mapSharedStore[ObjectIdentifier(AllSceneState.self)])
+                    let arrSceneStore = s_mapSharedStore[ObjectIdentifier(AllSceneState.self)] as! Store<AllSceneState>
+                    let sceneStore = arrSceneStore.allSceneStorage.sceneIdToStoreMap[.main]!
+                    let multiStreadStore = sceneStore.sharedStoreContainer.mapExistSharedStore[ObjectIdentifier(MultiThreadSharedState.self)]
+                    XCTAssertNotNil(multiStreadStore)
+                    XCTAssertEqual(s_mapSharedStore.count, 2)
+                    XCTAssertEqual(arrSceneStore.allSceneStorage.sceneIdToStoreMap.count, 1)
+                    XCTAssertEqual(sceneStore.sharedStoreContainer.mapExistSharedStore.count, 1)
+                    count += 1
+                }
+                expectation.fulfill()
+            }
+        }
+        
+        XCTAssertNil(s_mapSharedStore[ObjectIdentifier(AllSceneState.self)])
+        
+        wait(for: expectations, timeout: 5)
+        
+        XCTAssertNotNil(s_mapSharedStore[ObjectIdentifier(AllSceneState.self)])
+        XCTAssertTrue(count >= 2) // 至少触发两次
     }
 }
 
@@ -322,4 +360,10 @@ struct SaveSceneSharedStata: SceneSharableState {
     init(sceneId: SceneId) {
         self.sceneId = sceneId
     }
+}
+
+
+struct MultiThreadSharedState: VoidSceneSharableState {
+    
+    var name: String = ""
 }

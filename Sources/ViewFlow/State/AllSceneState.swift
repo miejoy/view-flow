@@ -10,7 +10,8 @@ import Foundation
 import DataFlow
 
 enum AllSceneAction: Action {
-    case addSceneStore(_ sceneId: SceneId, _ sceneStore:Store<SceneState>)
+    // 添加 SceneStore 一般是一个自动的过程，这里先去掉了
+    // case addSceneStore(_ sceneId: SceneId, _ sceneStore:Store<SceneState>)
     case removeSceneStore(_ sceneId: SceneId)
 }
 
@@ -18,29 +19,47 @@ enum AllSceneAction: Action {
 struct AllSceneState: FullSharableState {
     typealias BindAction = AllSceneAction
     
-    var allSceneStorage: [SceneId: Store<SceneState>] = [:]
+    var allSceneStorage: AllSceneStorage = .init()
     var subStates: [String : StorableState] = [:]
     
     static func loadReducers(on store: Store<AllSceneState>) {
         store.registerDefault { state, action in
             switch action {
-            case let .addSceneStore(sceneId, sceneStore):
-                state.allSceneStorage[sceneId] = sceneStore
+            // case let .addSceneStore(sceneId, sceneStore):
+            //     state.allSceneStorage[sceneId] = sceneStore
             case let .removeSceneStore(sceneId):
-                state.allSceneStorage.removeValue(forKey: sceneId)
+                state.allSceneStorage.removeSceneStore(of: sceneId)
             }
+        }
+    }
+}
+
+final class AllSceneStorage {
+    var sceneIdToStoreMap: [SceneId: Store<SceneState>] = [:]
+    let lock: DispatchQueue = .init(label: "view-flow.all_scene_storage.lock")
+    
+    func sceneStore(of sceneId: SceneId) -> Store<SceneState> {
+        return lock.sync {
+            if let store = sceneIdToStoreMap[sceneId] {
+                return store
+            }
+            
+            let state = SceneState(sceneId: sceneId)
+            let store = Store<SceneState>.box(state)
+            sceneIdToStoreMap[sceneId] = store
+            return store
+        }
+    }
+    
+    func removeSceneStore(of sceneId: SceneId) {
+        _ = lock.sync {
+            sceneIdToStoreMap.removeValue(forKey: sceneId)
         }
     }
 }
 
 extension Store where State == AllSceneState {
     func sceneStore(of sceneId: SceneId = .main) -> Store<SceneState> {
-        if let store = state.allSceneStorage[sceneId] {
-            return store
-        }
-        let state = SceneState(sceneId: sceneId)
-        let store = Store<SceneState>.box(state)
-        self.apply(action: .addSceneStore(sceneId, store))
-        return store
+        state.allSceneStorage.sceneStore(of: sceneId)
     }
 }

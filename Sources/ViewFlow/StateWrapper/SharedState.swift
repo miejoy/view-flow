@@ -129,39 +129,59 @@ final class SceneSharedStoreContainer {
     let sceneId: SceneId
     var mapExistSharedStore: [ObjectIdentifier:AnyStore] = [:]
     weak var sceneStore: Store<SceneState>?
+    let lock: DispatchQueue
+
     
     init(sceneStore: Store<SceneState>?) {
         self.sceneId = sceneStore?.sceneId ?? .main
         self.mapExistSharedStore = [:]
         self.sceneStore = sceneStore
+        self.lock = DispatchQueue(label: "view-flow.shared.lock.\(self.sceneId)")
     }
     
     func getSharedStore<State: SceneSharableState>(of stateType: State.Type) -> Store<State> {
         let key = ObjectIdentifier(State.self)
-        if let store = mapExistSharedStore[key]?.value as? Store<State> {
-            return store
-        }
-        // 一直向上会获取到 sceneStore，这里需要截断
-        if State.self is SceneState.Type {
-            if let theStore = sceneStore as? Store<State> {
+        var existOne: Bool = false
+        let store: Store<State> = self.lock.sync {
+            if let theStore = mapExistSharedStore[key]?.value as? Store<State> {
+                existOne = true
                 return theStore
             }
-            ViewMonitor.shared.fatalError("Get scene store failed")
-            return .init()
+            // 一直向上会获取到 sceneStore，这里需要截断
+            if State.self is SceneState.Type {
+                if let theStore = sceneStore as? Store<State> {
+                    return theStore
+                }
+                ViewMonitor.shared.fatalError("Get scene store failed")
+                return .init()
+            }
+            let theStore = Store<State>.box(State(sceneId: sceneId))
+            mapExistSharedStore[key] = theStore.eraseToAnyStore()
+            return theStore
         }
-        let store = Store<State>.box(State(sceneId: sceneId))
-        mapExistSharedStore[key] = store.eraseToAnyStore()
+        if existOne {
+            return store
+        }
         
         // 判断 upStore 是否添加了当前的状态
         if !(State.UpState.self is Never.Type) {
             let upStore = self.getSharedStore(of: State.UpState.self)
-            if let existState = upStore.subStates[store.state.stateId] {
-                ViewMonitor.shared.fatalError(
-                    "Attach State[\(String(describing: State.self))] to UpState[\(String(describing: State.UpState.self))] " +
-                    "with stateId[\(store.state.stateId)] failed: " +
-                    "exist State[\(String(describing: type(of: existState)))] with same stateId!")
+            let attachStoreBlock = {
+                if let existState = upStore.subStates[store.state.stateId] {
+                    ViewMonitor.shared.fatalError(
+                        "Attach SceneSharableState[\(String(describing: State.self))] to UpState[\(String(describing: State.UpState.self))] " +
+                        "with stateId[\(store.state.stateId)] failed: " +
+                        "exist State[\(String(describing: type(of: existState)))] with same stateId!")
+                }
+                upStore.add(subStore: store)
             }
-            upStore.add(subStore: store)
+            if Thread.isMainThread {
+                attachStoreBlock()
+            } else {
+                DispatchQueue.main.async {
+                    attachStoreBlock()
+                }
+            }
         }
         return store
     }

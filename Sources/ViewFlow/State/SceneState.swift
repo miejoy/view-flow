@@ -57,25 +57,43 @@ public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
 }
 
 extension SceneState: ReducerLoadableState {
-    public static func loadReducers(on store: Store<SceneState>) {
-        store.state.storage.sceneStore = store
-        // 手动绑定上级 store
-        let upStore = Store<AllSceneState>.shared
-        let sceneIdStr = store.state.sceneId.description
-        guard upStore.state.subStates[sceneIdStr] == nil else {
-            ViewMonitor.shared.fatalError(
-                "Attach SceneState[\(sceneIdStr)] to AllSceneState failed: exist SceneState with same sceneId!"
-            )
-            return
+    
+    public static func didBoxed(on store: Store<some StorableState>) {
+        if let store = store as? Store<SceneState> {
+            store.state.storage.sceneStore = store
+            // 手动绑定上级 store
+            let upStore = Store<AllSceneState>.shared
+            let sceneIdStr = store.state.sceneId.description
+            guard upStore.state.subStates[sceneIdStr] == nil else {
+                ViewMonitor.shared.fatalError(
+                    "Attach SceneState[\(sceneIdStr)] to AllSceneState failed: exist SceneState with same sceneId!"
+                )
+                return
+            }
+            upStore.state.subStates[sceneIdStr] = store.state
+            store.setDestroyCallback { [weak upStore] state in
+                upStore?.subStates.removeValue(forKey: sceneIdStr)
+            }
+            
+            if Thread.isMainThread {
+                upStore.observe(store: store) { [weak upStore] newState, _ in
+                    upStore?.subStates[sceneIdStr] = newState
+                }
+                loadReducers(on: store)
+            } else {
+                DispatchQueue.main.async { [weak upStore, weak store] in
+                    guard let upStore = upStore else { return }
+                    guard let store = store else { return }
+                    upStore.observe(store: store) { [weak upStore] newState, _ in
+                        upStore?.subStates[sceneIdStr] = newState
+                    }
+                    loadReducers(on: store)
+                }
+            }
         }
-        upStore.state.subStates[sceneIdStr] = store.state
-        upStore.observe(store: store) { [weak upStore] newState, _ in
-            upStore?.subStates[sceneIdStr] = newState
-        }
-        store.setDestroyCallback { [weak upStore] state in
-            upStore?.subStates.removeValue(forKey: sceneIdStr)
-        }
-        
+    }
+    
+    public static func loadReducers(on store: Store<SceneState>) {        
         store.registerDefault { state, action in
             switch action {
             case .onAppear(let view, let viewPath):
