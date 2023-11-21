@@ -129,20 +129,17 @@ final class SceneSharedStoreContainer {
     let sceneId: SceneId
     var mapExistSharedStore: [ObjectIdentifier:AnyStore] = [:]
     weak var sceneStore: Store<SceneState>?
-    let lock: DispatchQueue
-
     
     init(sceneStore: Store<SceneState>?) {
         self.sceneId = sceneStore?.sceneId ?? .main
         self.mapExistSharedStore = [:]
         self.sceneStore = sceneStore
-        self.lock = DispatchQueue(label: "view-flow.shared.lock.\(self.sceneId)")
     }
     
     func getSharedStore<State: SceneSharableState>(of stateType: State.Type) -> Store<State> {
         let key = ObjectIdentifier(State.self)
         var existOne: Bool = false
-        let store: Store<State> = self.lock.sync {
+        let store: Store<State> = Store<AllSceneState>.shared.allSceneStorage.lock.syncWithCheck {
             if let theStore = mapExistSharedStore[key]?.value as? Store<State> {
                 existOne = true
                 return theStore

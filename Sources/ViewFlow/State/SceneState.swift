@@ -126,13 +126,15 @@ public final class SceneStorage {
     
     public subscript<Key: SceneStorageKey>(_ keyType: Key.Type) -> Key.Value {
         get {
-            let key = ObjectIdentifier(Key.self)
-            if let value = storage[key] as? Key.Value {
+            Store<AllSceneState>.shared.allSceneStorage.lock.syncWithCheck {
+                let key = ObjectIdentifier(Key.self)
+                if let value = storage[key] as? Key.Value {
+                    return value
+                }
+                let value = Key.defaultValue(on: sceneStore)
+                storage[key] = value
                 return value
             }
-            let value = Key.defaultValue(on: sceneStore)
-            storage[key] = value
-            return value
         }
     }
 }

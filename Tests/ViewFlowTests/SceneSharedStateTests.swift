@@ -267,6 +267,24 @@ final class SceneSharedStateTests: XCTestCase {
         XCTAssertNotNil(s_mapSharedStore[ObjectIdentifier(AllSceneState.self)])
         XCTAssertTrue(count >= 2) // 至少触发两次
     }
+    
+    func testCreateSceneSharedStoreOnOtherSceneSharedStoreCreation() {
+        s_mapSharedStore.removeAll()
+        
+        _ = Store<MultiThreadNestSharedState>.shared
+        
+        
+        XCTAssertNotNil(s_mapSharedStore[ObjectIdentifier(AllSceneState.self)])
+        XCTAssertEqual(s_mapSharedStore.count, 2)
+        
+        let allSceneStore = Store<AllSceneState>.shared
+        let mainSceneStore = allSceneStore.allSceneStorage.sceneIdToStoreMap[.main]!
+        
+        XCTAssertNotNil(mainSceneStore.sharedStoreContainer.mapExistSharedStore[ObjectIdentifier(MultiThreadNestSharedState.self)])
+        XCTAssertNotNil(mainSceneStore.sharedStoreContainer.mapExistSharedStore[ObjectIdentifier(MultiThreadSubSharedState.self)])
+        
+        XCTAssertEqual(mainSceneStore.sharedStoreContainer.mapExistSharedStore.count, 2)
+    }
 }
 
 struct NormalSharedState: VoidSceneSharableState {
@@ -365,5 +383,18 @@ struct SaveSceneSharedStata: SceneSharableState {
 
 struct MultiThreadSharedState: VoidSceneSharableState {
     
+    var name: String = ""
+}
+
+struct MultiThreadNestSharedState : VoidSceneSharableState {
+    var name: String = ""
+    
+    init() {
+        self.name = ""
+        _ = Store<MultiThreadSubSharedState>.shared
+    }
+}
+
+struct MultiThreadSubSharedState : VoidSceneSharableState {
     var name: String = ""
 }
