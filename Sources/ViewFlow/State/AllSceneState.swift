@@ -36,10 +36,9 @@ struct AllSceneState: FullSharableState {
 
 final class AllSceneStorage {
     var sceneIdToStoreMap: [SceneId: Store<SceneState>] = [:]
-    let lock: DispatchQueue = .checkableQueue(label: "view-flow.all_scene_storage.lock")
     
     func sceneStore(of sceneId: SceneId) -> Store<SceneState> {
-        return lock.syncWithCheck {
+        return DispatchQueue.syncOnStoreQueue {
             if let store = sceneIdToStoreMap[sceneId] {
                 return store
             }
@@ -52,7 +51,7 @@ final class AllSceneStorage {
     }
     
     func removeSceneStore(of sceneId: SceneId) {
-        _ = lock.syncWithCheck {
+        _ = DispatchQueue.syncOnStoreQueue {
             sceneIdToStoreMap.removeValue(forKey: sceneId)
         }
     }

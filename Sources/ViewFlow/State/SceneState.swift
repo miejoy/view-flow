@@ -126,7 +126,7 @@ public final class SceneStorage {
     
     public subscript<Key: SceneStorageKey>(_ keyType: Key.Type) -> Key.Value {
         get {
-            Store<AllSceneState>.shared.allSceneStorage.lock.syncWithCheck {
+            DispatchQueue.syncOnStoreQueue {
                 let key = ObjectIdentifier(Key.self)
                 if let value = storage[key] as? Key.Value {
                     return value

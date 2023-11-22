@@ -139,7 +139,7 @@ final class SceneSharedStoreContainer {
     func getSharedStore<State: SceneSharableState>(of stateType: State.Type) -> Store<State> {
         let key = ObjectIdentifier(State.self)
         var existOne: Bool = false
-        let store: Store<State> = Store<AllSceneState>.shared.allSceneStorage.lock.syncWithCheck {
+        let store: Store<State> = DispatchQueue.syncOnStoreQueue {
             if let theStore = mapExistSharedStore[key]?.value as? Store<State> {
                 existOne = true
                 return theStore
