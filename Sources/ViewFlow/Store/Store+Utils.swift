@@ -121,12 +121,12 @@ extension Store where State: ActionBindable {
 }
 
 extension Store where State: SceneSharableState {
-    // 共享状态存储器，读取主场景的（线程安全的，可直接使用）
+    /// 共享状态存储器，读取主场景的（线程安全的，可直接使用）
     public static var shared: Store<State> {
         Store<AllSceneState>.shared.sceneStore().state.getSharedStore(of: State.self)
     }
     
-    // 对应场景共享状态存储区（线程安全的，可直接使用）
+    /// 对应场景共享状态存储区（线程安全的，可直接使用）
     public static func shared(on sceneId: SceneId) -> Store<State> {
         return Store<AllSceneState>.shared.sceneStore(of: sceneId).state.getSharedStore(of: State.self)
     }
@@ -135,5 +135,17 @@ extension Store where State: SceneSharableState {
 extension Store where State == SceneState {
     public static func shared(on sceneId: SceneId) -> Store<State> {
         Store<AllSceneState>.shared.sceneStore(of: sceneId)
+    }
+}
+
+extension SceneSharableState {
+    /// 共享状态存储器，读取主场景的（线程安全的，可直接使用）
+    public static var sharedStore: Store<Self> {
+        Store<AllSceneState>.shared.sceneStore().state.getSharedStore(of: Self.self)
+    }
+    
+    /// 对应场景共享状态存储区（线程安全的，可直接使用）
+    public static func sharedStore(on sceneId: SceneId) -> Store<Self> {
+        Store<AllSceneState>.shared.sceneStore(of: sceneId).state.getSharedStore(of: Self.self)
     }
 }
