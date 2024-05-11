@@ -24,6 +24,10 @@ public struct ViewState<State: StorableViewState> : DynamicProperty {
     @Environment(\.recordViewState)
     var recordViewState
     
+    public init(initialValue value: State) {
+        self._storage = .init(wrappedValue: .init(state: value))
+    }
+    
     public init(wrappedValue value: State) {
         self._storage = .init(wrappedValue: .init(state: value))
     }
