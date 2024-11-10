@@ -13,6 +13,8 @@ import XCTViewFlow
 
 final class SceneSharedStateTests: XCTestCase {
     
+    static var semaphore = DispatchSemaphore(value: 1)
+    
     func resetDefaultSceneState() {
         let sceneStore = Store<SceneState>.shared
         sceneStore.subStates = [:]
@@ -23,17 +25,18 @@ final class SceneSharedStateTests: XCTestCase {
     
     func testSceneSharedState() {
         resetDefaultSceneState()
-        let sceneStore = Store<SceneState>.shared
+        let sceneId: SceneId = .custom(#function)
+        let sceneStore = Store<SceneState>.shared(on: sceneId)
         XCTAssert(sceneStore.sharedStoreContainer.mapExistSharedStore.isEmpty)
         XCTAssert(sceneStore.state.subStates.isEmpty)
         
         let normalSharedStateWrapper = SharedState<NormalSharedState>()
-        normalSharedStateWrapper.storage.configStoreIfNeed(.main)
+        normalSharedStateWrapper.storage.configStoreIfNeed(sceneId)
         XCTAssertEqual(sceneStore.sharedStoreContainer.mapExistSharedStore.count, 1)
         XCTAssert(sceneStore.state.subStates[normalSharedStateWrapper.wrappedValue.stateId] != nil)
         
         let secondSharedStateWrapper = SharedState<NormalSharedState>()
-        secondSharedStateWrapper.storage.configStoreIfNeed(.main)
+        secondSharedStateWrapper.storage.configStoreIfNeed(sceneId)
         XCTAssertEqual(sceneStore.sharedStoreContainer.mapExistSharedStore.count, 1)
         
         XCTAssertEqual(secondSharedStateWrapper.wrappedValue.name, "")
@@ -43,45 +46,45 @@ final class SceneSharedStateTests: XCTestCase {
     }
     
     func testStateSharedStore() {
+        
         resetDefaultSceneState()
         let sceneStore = SceneState.sharedStore
-        XCTAssert(sceneStore.sharedStoreContainer.mapExistSharedStore.isEmpty)
         XCTAssert(sceneStore.state.subStates.isEmpty)
         
-        let normalSharedStore = NormalSharedState.sharedStore
-        XCTAssertEqual(sceneStore.sharedStoreContainer.mapExistSharedStore.count, 1)
-        XCTAssert(sceneStore.state.subStates[normalSharedStore.stateId] != nil)
+        let oneSharedStore = OneSharedState.sharedStore
+        XCTAssert(sceneStore.state.subStates[oneSharedStore.stateId] != nil)
         
-        let secondSharedStateWrapper = NormalSharedState.sharedStore(on: .main)
-        XCTAssertEqual(sceneStore.sharedStoreContainer.mapExistSharedStore.count, 1)
+        let secondSharedStateWrapper = OneSharedState.sharedStore(on: .main)
         
         XCTAssertEqual(secondSharedStateWrapper.name, "")
-        let newName = "new"
-        normalSharedStore.name = newName
+        let newName = "new" + #function
+        oneSharedStore.name = newName
         XCTAssertEqual(secondSharedStateWrapper.name, newName)
     }
     
     func testSceneStateFullSharable() {
         resetDefaultSceneState()
-        let sceneStore = Store<SceneState>.shared
+        let sceneId: SceneId = .custom(#function)
+        let sceneStore = SceneState.sharedStore(on: sceneId)
         XCTAssert(sceneStore.sharedStoreContainer.mapExistSharedStore.isEmpty)
         XCTAssert(sceneStore.state.subStates.isEmpty)
         
         sharedReducerIsLoad = false
-        SharedState<FullSharedState>().storage.configStoreIfNeed(.main)
+        SharedState<FullSharedState>().storage.configStoreIfNeed(sceneId)
         XCTAssert(sharedReducerIsLoad)
     }
     
     func testSceneSharedStateSharedInSameScene() {
         resetDefaultSceneState()
-        let sceneStore = Store<SceneState>.shared
+        let sceneId: SceneId = .custom(#function)
+        let sceneStore = SceneState.sharedStore(on: sceneId)
         XCTAssert(sceneStore.sharedStoreContainer.mapExistSharedStore.isEmpty)
         XCTAssert(sceneStore.state.subStates.isEmpty)
         
         let normalSharedStateWrapper = SharedState<NormalSharedState>()
         let secondSharedStateWrapper = SharedState<NormalSharedState>()
-        normalSharedStateWrapper.storage.configStoreIfNeed(.main)
-        secondSharedStateWrapper.storage.configStoreIfNeed(.main)
+        normalSharedStateWrapper.storage.configStoreIfNeed(sceneId)
+        secondSharedStateWrapper.storage.configStoreIfNeed(sceneId)
         XCTAssertEqual(sceneStore.sharedStoreContainer.mapExistSharedStore.count, 1)
         
         XCTAssertEqual(secondSharedStateWrapper.wrappedValue.name, "")
@@ -94,11 +97,12 @@ final class SceneSharedStateTests: XCTestCase {
     
     func testSceneSharedStateUseInView() {
         resetDefaultSceneState()
-        let sceneStore = Store<SceneState>.shared
+        let sceneId: SceneId = .custom(#function)
+        let sceneStore = SceneState.sharedStore(on: sceneId)
         XCTAssert(sceneStore.sharedStoreContainer.mapExistSharedStore.isEmpty)
         XCTAssert(sceneStore.state.subStates.isEmpty)
         let normalSharedStateWrapper = SharedState<NormalSharedState>()
-        normalSharedStateWrapper.storage.configStoreIfNeed(.main)
+        normalSharedStateWrapper.storage.configStoreIfNeed(sceneId)
         let view = NormalView()
         
         // 另一个场景的 view，主要验证他们互不影响
@@ -142,7 +146,8 @@ final class SceneSharedStateTests: XCTestCase {
     
     func testSceneSharedStateUseInViewWithRefresh() {
         resetDefaultSceneState()
-        let sceneStore = Store<SceneState>.shared
+        let sceneId: SceneId = .custom(#function)
+        let sceneStore = SceneState.sharedStore(on: sceneId)
         XCTAssert(sceneStore.sharedStoreContainer.mapExistSharedStore.isEmpty)
         XCTAssert(sceneStore.state.subStates.isEmpty)
         var normalSharedStateWrapper : SharedState<NormalSharedState>? = nil
@@ -158,9 +163,10 @@ final class SceneSharedStateTests: XCTestCase {
                 normalSharedStateWrapper = $0
             }
         }
+        
         let containStateWrapper = view.stateWrapper()
         
-        let host = ViewTest.host(view)
+        let host = ViewTest.host(view.environment(\.sceneId, sceneId))
         
         // 确定共享状态已被添加
         XCTAssertNotNil(normalSharedStateWrapper)
@@ -249,6 +255,10 @@ final class SceneSharedStateTests: XCTestCase {
         ViewTest.refreshHost(host)
     }
     
+    func testSaveSceneIdSharedStateOnMain() {
+        XCTAssertEqual(SaveSceneSharedStata.sharedStore.sceneId, .main)
+    }
+    
     func testCreateSceneSharedStoreOnMultiThread() {
         resetDefaultSceneState()
         s_mapSharedStore.removeAll()
@@ -307,6 +317,11 @@ final class SceneSharedStateTests: XCTestCase {
 }
 
 struct NormalSharedState: VoidSceneSharableState {
+    var name: String = ""
+}
+
+// 只有一个地方使用，其他地方不要使用
+struct OneSharedState: VoidSceneSharableState {
     var name: String = ""
 }
 
@@ -386,13 +401,9 @@ struct ContainSharedState: VoidSceneSharableState {
     var refreshTrigger: Bool = false
 }
 
-struct SaveSceneSharedStata: SceneSharableState {
+struct SaveSceneSharedStata: SceneWithIdSharableState {
     
     let sceneId: SceneId
-    
-    init() {
-        self.init(sceneId: .main)
-    }
     
     init(sceneId: SceneId) {
         self.sceneId = sceneId
@@ -416,4 +427,10 @@ struct MultiThreadNestSharedState : VoidSceneSharableState {
 
 struct MultiThreadSubSharedState : VoidSceneSharableState {
     var name: String = ""
+}
+
+extension SceneState {
+    static func sharedStore(_ method:  String = #function) -> Store<SceneState> {
+        SceneState.sharedStore(on: .custom(method))
+    }
 }

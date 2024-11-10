@@ -10,20 +10,6 @@ import Foundation
 import DataFlow
 import SwiftUI
 
-public enum SceneId: CustomStringConvertible, Hashable {
-    case main
-    case custom(String)
-    
-    public var description: String {
-        switch self {
-        case .main:
-            return "main"
-        case .custom(let str):
-            return str
-        }
-    }
-}
-
 /// 场景事件
 public enum SceneAction: Action {
     case onAppear(any RoutableView, ViewPath)

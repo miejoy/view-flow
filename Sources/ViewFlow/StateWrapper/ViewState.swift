@@ -72,6 +72,7 @@ final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject 
     
     func configIfNeed(_ sceneId: SceneId, _ viewPath: ViewPath, _ recordViewState: Bool) {
         if !isReady {
+            store[SceneIdKey.self] = sceneId
             self.cancellable = store.addObserver { [weak self] new, old in
                 self?.refreshTrigger.toggle()
             }

@@ -372,6 +372,36 @@ final class ViewStateTests: XCTestCase {
         cancellable.cancel()
     }
     #endif
+    
+    func testSceneIdInStoreOfViewState() {
+        struct NormalView: View {
+            @ViewState var initState: NormalViewState = .init()
+            var callback: (Store<NormalViewState>) -> Void
+            
+            var body: some View {
+                callback($initState)
+                return Text(initState.name)
+                    .onAppear {
+                        XCTAssertEqual(initState.name, "")
+                        initState.name = "newName"
+                    }
+            }
+        }
+        
+        var normalStore: Store<NormalViewState>? = nil
+        let normalView = NormalView { store in
+            if normalStore == nil {
+                normalStore = store
+            }
+        }
+        
+        let sceneId: SceneId = .custom(#function)
+        let host = ViewTest.host(normalView.environment(\.sceneId, sceneId))
+        
+        XCTAssertEqual(normalStore?.sceneId, sceneId)
+        
+        ViewTest.releaseHost(host)
+    }
 }
 
 

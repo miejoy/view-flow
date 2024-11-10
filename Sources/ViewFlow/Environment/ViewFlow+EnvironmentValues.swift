@@ -35,7 +35,7 @@ extension EnvironmentValues {
 
 /// 场景 ID 对应 Key
 struct SceneIdKey: EnvironmentKey {
-    static var defaultValue: SceneId =  .main
+    static var defaultValue: SceneId = .main
 }
 
 /// 是否记录界面状态对应 Key
