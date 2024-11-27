@@ -13,7 +13,7 @@ public struct ViewPath: Hashable, CustomStringConvertible {
     
     public var arrPaths: [String] = []
     
-    init() {}
+    public init() {}
     
     init(arrPaths: [String], _ path: String) {
         self.arrPaths = arrPaths
