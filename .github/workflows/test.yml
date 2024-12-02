@@ -20,5 +20,7 @@ jobs:
       run: swift build -v
     - name: Run tests
       run: swift test -v --enable-code-coverage
+    - name: Convert code coverage
+      run: xcrun llvm-cov export -format="lcov" -instr-profile=$(find .build -name default.profdata) $(find .build -name '*.xctest')/Contents/MacOS/*PackageTests > info.lcov
     - name: Upload coverage reports
       uses: codecov/codecov-action@v5
