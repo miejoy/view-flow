@@ -16,13 +16,11 @@ final class TrackableViewTests: XCTestCase {
     func testViewAppear() {
         let mainView = MainView()
         let mainBody = mainView.body
-
-        XCTAssert(((mainBody as? TrackWrapperView<ContentView>) != nil))
         
-        let contentWrapperView = mainBody as! TrackWrapperView<ContentView>
-        let contentView = contentWrapperView.content
-        let contentBody = contentView.body
-        XCTAssert(((contentBody as? TrackWrapperView<Text>) != nil))
+        let bodyStr = String(describing: mainBody)
+        
+        XCTAssert(bodyStr.contains("TrackWrapperView"))
+        XCTAssert(bodyStr.contains("ContentView"))
     }
 }
 

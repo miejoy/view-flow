@@ -18,13 +18,11 @@ final class RoutableViewTests: XCTestCase {
         let mainView = MainRouteView()
         let host = ViewTest.host(mainView)
         let mainBody = mainView.body
-
-        XCTAssert(((mainBody as? TrackWrapperView<ContentRouteView>) != nil))
-
-        let contentWrapperView = mainBody as! TrackWrapperView<ContentRouteView>
-        let contentView = contentWrapperView.content
-        let contentBody = contentView.body
-        XCTAssert(((contentBody as? RouteWrapperView<Text>) != nil))
+        
+        let bodyStr = String(describing: mainBody)
+        
+        XCTAssert(bodyStr.contains("TrackWrapperView"))
+        XCTAssert(bodyStr.contains("ContentRouteView"))
         
         ViewTest.releaseHost(host)
     }

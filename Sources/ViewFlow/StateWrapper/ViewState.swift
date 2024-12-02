@@ -73,12 +73,17 @@ final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject 
     func configIfNeed(_ sceneId: SceneId, _ viewPath: ViewPath, _ recordViewState: Bool) {
         if !isReady {
             store[SceneIdKey.self] = sceneId
+            store[ViewPathKey.self] = viewPath
             self.cancellable = store.addObserver { [weak self] new, old in
                 self?.refreshTrigger.toggle()
             }
             if recordViewState {
                 setupLifeCycle(sceneId, viewPath)
             }
+            
+            // 调用已加载到 View 上的方法，主要是为了触发 loadReducers
+            State.didAddStoreToView(store)
+            
             isReady = true
         }
     }

@@ -15,7 +15,8 @@ public protocol TrackableView: View {
     associatedtype Content : View
 
     /// 内部保护的 View
-    @ViewBuilder var content: Self.Content { get }
+    @ViewBuilder @MainActor @preconcurrency
+    var content: Self.Content { get }
     /// 当前 View 的追踪标识，默认为 当前类名
     var trackId: String { get }
 }
@@ -38,7 +39,8 @@ struct TrackWrapperView<Content: View> : View {
     @Environment(\.viewPath) var viewPath
     var trackId: String
     
-    @ViewBuilder var content: Content
+    @ViewBuilder @MainActor @preconcurrency
+    var content: Content
 
     var body: some View {
         return self.content

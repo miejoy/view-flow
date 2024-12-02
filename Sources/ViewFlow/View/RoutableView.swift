@@ -34,7 +34,8 @@ struct RouteWrapperView<Content: View> : View {
     let trackId: String
     let view: any RoutableView
     
-    @ViewBuilder var content: Content
+    @ViewBuilder @MainActor @preconcurrency
+    var content: Content
 
     var body: some View {
         return self.content

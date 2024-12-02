@@ -206,6 +206,13 @@ final class ViewStateTests: XCTestCase {
         ViewTest.releaseHost(host)
     }
     
+    func testInitReducerNotLoadWhileNotInView() {
+        initStateReducerCall = false
+        
+        _ = Store<InitReducerViewState>()
+        XCTAssert(!initStateReducerCall)
+    }
+    
     func testViewStateLifeCircly() {
         resetDefaultSceneState()
         let sceneStore = Store<SceneState>.shared

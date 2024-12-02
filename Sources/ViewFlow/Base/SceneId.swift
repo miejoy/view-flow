@@ -23,6 +23,3 @@ public enum SceneId: CustomStringConvertible, Hashable {
         }
     }
 }
-
-/// 在存储空间中保存 SceneId 使用的 Key，暂时内部使用
-extension SceneIdKey: DefaultStoreStorageKey {}
