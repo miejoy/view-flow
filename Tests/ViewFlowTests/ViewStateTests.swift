@@ -409,6 +409,46 @@ final class ViewStateTests: XCTestCase {
         
         ViewTest.releaseHost(host)
     }
+    
+    func testViewPathInStoreOfViewState() {
+        struct NormalView: View {
+            @ViewState var initState: NormalViewState = .init()
+            var callback: (Store<NormalViewState>) -> Void
+            
+            var body: some View {
+                callback($initState)
+                return Text(initState.name)
+                    .onAppear {
+                        XCTAssertEqual(initState.name, "")
+                        initState.name = "newName"
+                    }
+            }
+        }
+        
+        var normalStore: Store<NormalViewState>? = nil
+        
+        struct NormalRouteView: TrackableView {
+            var callback: (Store<NormalViewState>) -> Void
+            
+            var content: some View {
+                NormalView(callback: callback)
+            }
+        }
+        
+        
+        let normalView = NormalRouteView { store in
+            if normalStore == nil {
+                normalStore = store
+            }
+        }
+        
+        let host = ViewTest.host(normalView)
+        
+        let viewPath = normalStore?.viewPath
+        XCTAssertEqual(viewPath, .init(arrPaths: [], "NormalRouteView"))
+        
+        ViewTest.releaseHost(host)
+    }
 }
 
 

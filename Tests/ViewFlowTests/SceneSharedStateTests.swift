@@ -256,6 +256,7 @@ final class SceneSharedStateTests: XCTestCase {
     }
     
     func testSaveSceneIdSharedStateOnMain() {
+        XCTAssertEqual(SaveSceneSharedStata().sceneId, .main)
         XCTAssertEqual(SaveSceneSharedStata.sharedStore.sceneId, .main)
     }
     

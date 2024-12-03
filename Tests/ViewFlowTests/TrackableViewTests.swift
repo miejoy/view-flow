@@ -38,11 +38,6 @@ struct ContentView: TrackableView {
     }
 }
 
-//struct MainView_Preview: PreviewProvider {
-//    static var previews: some View {
-//        MainView()
-//    }
-//}
 
 struct MyApp: App {
     var body: some Scene {
