@@ -70,9 +70,6 @@ final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject 
         if !isReady {
             store[SceneIdKey.self] = sceneId
             store[ViewPathKey.self] = viewPath
-            self.cancellable = store.addObserver { [weak self] new, old in
-                self?.refreshTrigger.toggle()
-            }
             if recordViewState {
                 setupLifeCycle(sceneId, viewPath)
             }
@@ -80,6 +77,10 @@ final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject 
             // 调用已加载到 View 上的方法，主要是为了触发 loadReducers
             State.didAddStoreToView(store)
             
+            // 放在最后避免上面一些方法会更新到 state，导致调用到 refreshTrigger，触发警告
+            self.cancellable = store.addObserver { [weak self] new, old in
+                self?.refreshTrigger.toggle()
+            }
             isReady = true
         }
     }
