@@ -38,6 +38,7 @@ final class SceneStateTests: XCTestCase {
         
         sceneStore = nil
         XCTAssert(allSceneStore.state.subStates.isEmpty)
+        resetAllSceneState()
     }
     
     func testMuiltSceneState() throws {
@@ -56,6 +57,7 @@ final class SceneStateTests: XCTestCase {
         sceneStoreMain = nil
         sceneStoreSecond = nil
         XCTAssert(allSceneStore.state.subStates.isEmpty)
+        resetAllSceneState()
     }
 
     // 目前不可能出现同一个 SceneId 重复注册的情况
