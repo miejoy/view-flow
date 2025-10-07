@@ -41,6 +41,7 @@ final class SceneStateTests: XCTestCase {
     }
     
     func testMuiltSceneState() throws {
+        resetAllSceneState()
         let allSceneStore = Store<AllSceneState>.shared
         XCTAssert(allSceneStore.state.subStates.isEmpty)
         
