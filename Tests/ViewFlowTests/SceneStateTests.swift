@@ -16,7 +16,7 @@ final class SceneStateTests: XCTestCase {
     func resetAllSceneState() {
         Store<AllSceneState>.shared.allSceneStorage = .init()
         Store<AllSceneState>.shared.subStates = [:]
-        s_mapSharedStore.removeValue(forKey: ObjectIdentifier(AllSceneState.self))
+        Store<AllSceneState>.shared.mapCancellable.removeAll()
     }
     
     func resetDefaultSceneState() {
@@ -24,6 +24,7 @@ final class SceneStateTests: XCTestCase {
         sceneStore.subStates = [:]
         sceneStore.arrAppearViewPath = []
         sceneStore.storage.storage = [:]
+        sceneStore.mapCancellable.removeAll()
     }
     
     func testAllSceneState() throws {
