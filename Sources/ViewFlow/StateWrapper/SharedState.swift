@@ -26,6 +26,7 @@ public struct SharedState<State: SharableState>: DynamicProperty {
     var sceneId
     
     public init() {
+        // 这里是默认初始化方法，如果当前只是 SharableState，会走这里，SceneSharableState 会走另一个 init 方法
         storage = .init { _ in .shared }
         storage.configStoreIfNeed(.main)
     }
@@ -97,6 +98,7 @@ final class SharedStoreStorage<State: SharableState>: ObservableObject {
 
 extension SharedState where State: SceneSharableState {
     public init() {
+        // 这里只构造 storage，store 在调用首次 update 方法是构造
         storage = .init { Store<State>.shared(on: $0) }
     }
 }

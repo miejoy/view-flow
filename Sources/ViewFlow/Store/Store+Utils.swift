@@ -18,9 +18,9 @@ extension Store {
     /// - Parameter keyPath: 对应值的 keyPath
     /// - Returns: 返回对应值的绑定类型
     public func binding<T: Equatable>(of keyPath: WritableKeyPath<State, T>) -> Binding<T> {
-        Binding<T>.init(get: { () -> T in
+        Binding<T>.init {
             self.state[keyPath: keyPath]
-        }) { (value, transaction) in
+        } set: { (value, transaction) in
             if self.state[keyPath: keyPath] == value {
                 // 相同值时不更新
                 return
@@ -39,9 +39,9 @@ extension Store {
         of keyPath: KeyPath<State, T>,
         _ transformSetToAction: @escaping (_ newValue: T) -> A
     ) -> Binding<T> {
-        Binding<T>.init(get: { () -> T in
+        Binding<T>.init {
             self.state[keyPath: keyPath]
-        }) { (value, transaction) in
+        } set: { (value, transaction) in
             if self.state[keyPath: keyPath] == value {
                 // 相同值时不更新
                 return
@@ -59,9 +59,9 @@ extension Store {
         of keyPath: KeyPath<State, T>,
         _ transformSetToAction: @escaping (_ newValue: T, _ transaction: Transaction) -> A
     ) -> Binding<T> {
-        Binding<T>.init(get: { () -> T in
+        Binding<T>.init {
             self.state[keyPath: keyPath]
-        }) { (value, transaction) in
+        } set: { (value, transaction) in
             if self.state[keyPath: keyPath] == value {
                 // 相同值时不更新
                 return

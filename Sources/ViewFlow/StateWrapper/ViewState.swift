@@ -63,7 +63,7 @@ final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject 
     var cancellable: AnyCancellable? = nil
     
     init(state: State) {
-        self.store = .box(state)
+        self.store = .box(state, configs: [.make(.useViewStateWrapper, true)])
     }
     
     func configIfNeed(_ sceneId: SceneId, _ viewPath: ViewPath, _ recordViewState: Bool) {

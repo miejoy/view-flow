@@ -9,12 +9,14 @@ import XCTest
 import SwiftUI
 import DataFlow
 @testable import ViewFlow
+@testable import DataFlow
 
 final class SceneStateTests: XCTestCase {
     
     func resetAllSceneState() {
         Store<AllSceneState>.shared.allSceneStorage = .init()
         Store<AllSceneState>.shared.subStates = [:]
+        s_mapSharedStore.removeValue(forKey: ObjectIdentifier(AllSceneState.self))
     }
     
     func resetDefaultSceneState() {

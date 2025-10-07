@@ -206,11 +206,11 @@ final class ViewStateTests: XCTestCase {
         ViewTest.releaseHost(host)
     }
     
-    func testInitReducerNotLoadWhileNotInView() {
+    func testInitReducerLoadWhileNotInView() {
         initStateReducerCall = false
         
         _ = Store<InitReducerViewState>()
-        XCTAssert(!initStateReducerCall)
+        XCTAssert(initStateReducerCall)
     }
     
     func testViewStateLifeCircly() {

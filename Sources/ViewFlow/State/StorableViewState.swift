@@ -8,7 +8,8 @@
 import DataFlow
 import Foundation
 
-/// 可存储的界面状态
+/// 可存储的界面状态，
+/// 注意：尽量在 ViewState 包装器中使用，如果不是，将无法获取可靠的 sceneId 和 viewPath
 public protocol StorableViewState: AttachableState where UpState == SceneState {
     /// 对应 Store 被加载到 View 时调用，尽量不要重写他，如果确实要重写，请注意 ReducerLoadableState 相关方法的调用
     static func didAddStoreToView(_ store: Store<some StorableViewState>)
@@ -36,15 +37,25 @@ extension Store where State: StorableViewState {
 
 extension ReducerLoadableState where Self: StorableViewState {
     public static func didBoxed(on store: Store<some StorableState>) {
-        // 这里不做任何事情，主要是为了屏蔽自动调用加载处理器
-        // 只有对应 store 被加载到 view 上才需要加载处理器
-        // 被 ViewState 包装的 StorableViewState 如果继承了 ReducerLoadableState，
-        // 在 Store 被加载到 view 上时，会通过 didAddStoreToView 自动调用加载处理器
+        if !store[.useViewStateWrapper, default: false] {
+            // 如果没有使用 ViewState 包装，则需要立即加载 处理器，因为 didAddStoreToView 将不会被自动调用
+            if let store = store as? Store<Self> {
+                loadReducers(on: store)
+            }
+        }
     }
     
     public static func didAddStoreToView(_ store: Store<some StorableViewState>) {
-        if let store = store as? Store<Self> {
-            loadReducers(on: store)
+        if store[.useViewStateWrapper, default: false] {
+            // 只有使用 ViewState 包装的存储器材需要在这里自动加载 处理器
+            if let store = store as? Store<Self> {
+                loadReducers(on: store)
+            }
         }
     }
+}
+
+extension StoreConfigKey where Value == Bool {
+    /// 是否使用 ViewState 包装，仅内部使用
+    static let useViewStateWrapper: StoreConfigKey<Bool> = .init("UseViewStateWrapper")
 }
