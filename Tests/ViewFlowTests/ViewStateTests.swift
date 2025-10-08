@@ -491,7 +491,7 @@ struct InitViewState: StorableViewState, InitializableState {
 }
 
 var initStateReducerCall = false
-struct InitReducerViewState: StorableViewState, ReducerLoadableState, InitializableState {
+struct InitReducerViewState: StorableViewState, ReducerLoadableState, UseInitializableState {
     var name: String = ""
     
     static func loadReducers(on store: Store<InitReducerViewState>) {

@@ -44,7 +44,7 @@ final class AllSceneStorage {
             }
             
             let state = SceneState(sceneId: sceneId)
-            let store = Store<SceneState>.box(state)
+            let store = Store<SceneState>.innerBox(state, configs: [.make(.inAllSceneStorage, true)])
             sceneIdToStoreMap[sceneId] = store
             return store
         }
@@ -61,4 +61,8 @@ extension Store where State == AllSceneState {
     func sceneStore(of sceneId: SceneId = .main) -> Store<SceneState> {
         state.allSceneStorage.sceneStore(of: sceneId)
     }
+}
+
+extension StoreConfigKey where Value == Bool {
+    static let inAllSceneStorage: StoreConfigKey<Bool> = .init("InAllSceneStorage")
 }

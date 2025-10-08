@@ -54,7 +54,7 @@ public struct SharedState<State: SharableState>: DynamicProperty {
             return store
         }
         ViewMonitor.shared.fatalError("Can't get projectedValue before update() get call")
-        return .init()
+        return .box(.init(), configs: [.make(.useBoxOnShared, true)])
     }
     
     mutating public func update() {
@@ -152,9 +152,9 @@ final class SceneSharedStoreContainer {
                     return theStore
                 }
                 ViewMonitor.shared.fatalError("Get scene store failed")
-                return .init()
+                return .innerBox()
             }
-            let theStore = Store<State>.box(State(sceneId: sceneId))
+            let theStore = Store<State>.innerBox(State(sceneId: sceneId))
             mapExistSharedStore[key] = theStore.eraseToAnyStore()
             return theStore
         }

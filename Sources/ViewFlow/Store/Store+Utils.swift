@@ -121,6 +121,13 @@ extension Store where State: ActionBindable {
 }
 
 extension Store where State: SceneSharableState {
+    /// 内部使用包装器
+    static func innerBox(_ state: State = State(), configs: [StoreConfigPair] = []) -> Self {
+        var newConfigs = configs
+        newConfigs.append(.make(.useBoxOnShared, true))
+        return box(state, configs: newConfigs)
+    }
+    
     /// 共享状态存储器，读取主场景的（线程安全的，可直接使用）
     public static var shared: Store<State> {
         Store<AllSceneState>.shared.sceneStore().state.getSharedStore(of: State.self)

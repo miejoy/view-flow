@@ -32,10 +32,11 @@ final class SceneStateTests: XCTestCase {
         let allSceneStore = Store<AllSceneState>.shared
         XCTAssert(allSceneStore.state.subStates.isEmpty)
         
-        var sceneStore : Store<SceneState>? = Store<SceneState>()
+        var sceneStore : Store<SceneState>? = Store<SceneState>.shared
         XCTAssertEqual(allSceneStore.state.subStates.count, 1)
         XCTAssert((allSceneStore.state.subStates[sceneStore!.sceneId.description] != nil))
         
+        allSceneStore.allSceneStorage.removeSceneStore(of: sceneStore!.sceneId)
         sceneStore = nil
         XCTAssert(allSceneStore.state.subStates.isEmpty)
         resetAllSceneState()
@@ -46,13 +47,16 @@ final class SceneStateTests: XCTestCase {
         let allSceneStore = Store<AllSceneState>.shared
         XCTAssert(allSceneStore.state.subStates.isEmpty)
         
-        var sceneStoreMain : Store<SceneState>? = Store<SceneState>()
+        var sceneStoreMain : Store<SceneState>? = Store<SceneState>.shared
         XCTAssertEqual(allSceneStore.state.subStates.count, 1)
         XCTAssert((allSceneStore.state.subStates[sceneStoreMain!.sceneId.description] != nil))
         
-        var sceneStoreSecond : Store<SceneState>? = Store<SceneState>.box(SceneState(sceneId: .custom("Second")))
+        var sceneStoreSecond : Store<SceneState>? = Store<SceneState>.shared(on: .custom("Second"))
         XCTAssertEqual(allSceneStore.state.subStates.count, 2)
         XCTAssert((allSceneStore.state.subStates[sceneStoreSecond!.state.sceneId.description] != nil))
+        
+        allSceneStore.allSceneStorage.removeSceneStore(of: sceneStoreMain!.sceneId)
+        allSceneStore.allSceneStorage.removeSceneStore(of: sceneStoreSecond!.sceneId)
         
         sceneStoreMain = nil
         sceneStoreSecond = nil
