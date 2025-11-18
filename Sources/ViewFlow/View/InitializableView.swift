@@ -12,6 +12,7 @@ public protocol InitializableView: View {
     associatedtype InitData
     
     /// 初始化方法
+    @MainActor
     init(_ data: InitData)
     
     /// 尝试构造初始化所需数据
@@ -20,6 +21,7 @@ public protocol InitializableView: View {
 
 /// 可无需参数初始化的 View
 public protocol VoidInitializableView: InitializableView where InitData == Void {
+    @MainActor
     init()
 }
 
@@ -31,6 +33,7 @@ extension InitializableView {
 }
 
 extension VoidInitializableView {
+    @MainActor
     public init(_ data: InitData) {
         self.init()
     }

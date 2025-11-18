@@ -92,6 +92,7 @@ final class SceneStateTests: XCTestCase {
 //        cancellable.cancel()
 //    }
     
+    @MainActor
     func testSceneStateAction() {
         resetDefaultSceneState()
         let sceneStore = Store<SceneState>.shared
