@@ -31,14 +31,8 @@ public protocol ViewMonitorObserver: MonitorObserver {
 public final class ViewMonitor: BaseMonitor<ViewEvent> {
     public nonisolated(unsafe) static let shared: ViewMonitor = {
         ViewMonitor { event, observer in
-            if Thread.isMainThread {
-                MainActor.assumeIsolated {
-                    (observer as? ViewMonitorObserver)?.receiveViewEvent(event)
-                }
-            } else {
-                Task { @MainActor in
-                    (observer as? ViewMonitorObserver)?.receiveViewEvent(event)
-                }
+            DispatchQueue.executeOnMain {
+                (observer as? ViewMonitorObserver)?.receiveViewEvent(event)
             }
         }
     }()
@@ -48,6 +42,6 @@ public final class ViewMonitor: BaseMonitor<ViewEvent> {
     }
     
     public override func addObserver(_ observer: MonitorObserver) -> AnyCancellable {
-        Swift.fatalError("Only StoreMonitorObserver can observer this monitor")
+        Swift.fatalError("Only ViewMonitorObserver can observer this monitor")
     }
 }
