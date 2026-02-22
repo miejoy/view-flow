@@ -101,7 +101,7 @@ extension StateOnStoreStorageKey where Value == SceneStorage, State == SceneStat
 }
 
 extension Store where State == SceneState {
-    nonisolated var storage: SceneStorage {
+    public nonisolated var storage: SceneStorage {
         self[.storage, default: SceneStorage(sceneStore: self)]
     }
 }
