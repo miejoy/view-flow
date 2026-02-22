@@ -28,26 +28,23 @@ public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
     public var arrAppearViewPath: [ViewPath] = []
     
     public var subStates: [String : StorableState] = [:]
-    
-    /// 当前场景的数据存储器，其他模块可以使用这个存储器保持自己的数据
-//    public var storage: SceneStorage
-    
+
     public init() {
         self.init(sceneId: .main)
     }
     
     public init(sceneId: SceneId) {
         self.sceneId = sceneId
-//        self.storage = SceneStorage()
     }
 }
 
 extension SceneState: ReducerLoadableState {
-    
-    @MainActor public static func didBoxed(on store: Store<some StorableState>) {
-        if let store = store as? Store<SceneState> {
-            store[.sceneId] = store.state.sceneId
-            store.storage.sceneStore = store
+    public static func didBoxed(on store: Store<some StorableState>, state: some StorableState) {
+        guard let store = store as? Store<SceneState>, let state = state as? SceneState else { return }
+
+        store[.sceneId] = state.sceneId
+        store.storage.sceneStore = store
+        DispatchQueue.executeOnMain {
             // 手动绑定上级 store
             let upStore = Store<AllSceneState>.shared
             let sceneIdStr = store.state.sceneId.description
@@ -93,6 +90,22 @@ extension SceneState: ReducerLoadableState {
 extension Never : SceneSharableState {
     public init(sceneId: SceneId) { self.init() }
 }
+
+// MARK: - SceneId
+
+extension Store where State == SceneState {
+    // 提供非隔离域的 sceneId 访问
+    nonisolated public var sceneId: SceneId {
+        if Thread.isMainThread {
+            MainActor.assumeIsolated {
+                self.state.sceneId
+            }
+        } else {
+            self[.sceneId]
+        }
+    }
+}
+
 
 // MARK: - SceneStorage
 

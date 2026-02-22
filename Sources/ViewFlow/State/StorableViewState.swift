@@ -36,21 +36,21 @@ extension Store where State: StorableViewState {
 }
 
 extension ReducerLoadableState where Self: StorableViewState {
-    @MainActor public static func didBoxed(on store: Store<some StorableState>) {
-        if !store[.useViewStateWrapper, default: false] {
-            // 如果没有使用 ViewState 包装，则需要立即加载 处理器，因为 didAddStoreToView 将不会被自动调用
-            if let store = store as? Store<Self> {
+    public static func didBoxed(on store: Store<some StorableState>, state: some StorableState) {
+        guard let store = store as? Store<Self> else { return }
+        DispatchQueue.executeOnMain {
+            if !store[.useViewStateWrapper, default: false] {
+                // 如果没有使用 ViewState 包装，则需要立即加载 处理器，因为 didAddStoreToView 将不会被自动调用
                 loadReducers(on: store)
             }
         }
     }
     
     @MainActor public static func didAddStoreToView(_ store: Store<some StorableViewState>) {
+        guard let store = store as? Store<Self> else { return }
         if store[.useViewStateWrapper, default: false] {
             // 只有使用 ViewState 包装的存储器材需要在这里自动加载 处理器
-            if let store = store as? Store<Self> {
-                loadReducers(on: store)
-            }
+            loadReducers(on: store)
         }
     }
 }
