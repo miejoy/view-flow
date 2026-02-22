@@ -16,7 +16,7 @@ public protocol InitializableView: View {
     init(_ data: InitData)
     
     /// 尝试构造初始化所需数据
-    static func makeInitializeData(from data: Any) -> InitData?
+    nonisolated static func makeInitializeData(from data: Any) -> InitData?
 }
 
 /// 可无需参数初始化的 View
@@ -27,7 +27,7 @@ public protocol VoidInitializableView: InitializableView where InitData == Void 
 
 
 extension InitializableView {
-    public static func makeInitializeData(from data: Any) -> InitData? {
+    public nonisolated static func makeInitializeData(from data: Any) -> InitData? {
         return nil
     }
 }
@@ -38,7 +38,7 @@ extension VoidInitializableView {
         self.init()
     }
     
-    public static func makeInitializeData(from data: Any) -> InitData? {
+    public nonisolated static func makeInitializeData(from data: Any) -> InitData? {
         return ()
     }
 }
