@@ -35,21 +35,33 @@ extension EnvironmentValues {
 }
 
 /// 场景 ID 对应 Key，可在 StorableViewState 对应 Store 中使用
-struct SceneIdKey: EnvironmentKey, DefaultStoreStorageKey {
-    static var defaultValue: SceneId = .main
+struct SceneIdKey: EnvironmentKey {
+    static let defaultValue: SceneId = .main
 }
 
 /// 获取当前 View 所在 界面追踪路径 的环境 Key，可在 StorableViewState 对应 Store 中使用
-struct ViewPathKey: EnvironmentKey, DefaultStoreStorageKey {
-    static var defaultValue: ViewPath = ViewPath()
+struct ViewPathKey: EnvironmentKey {
+    static let defaultValue: ViewPath = ViewPath()
 }
 
 /// 是否记录界面状态对应 Key
 struct RecordViewStateKey: EnvironmentKey {
-    static var defaultValue: Bool = false
+    static let defaultValue: Bool = false
 }
 
 /// 获取当前建议导航标题的 Key
 struct SuggestNavTitleKey: EnvironmentKey {
-    static var defaultValue: String? = nil
+    static let defaultValue: String? = nil
+}
+
+// MARK: - StoreStorageKey
+
+extension DefaultStoreStorageKey where Value == SceneId {
+    /// 场景 ID 对应 Key，可在 StorableViewState 对应 Store 中使用
+    static let sceneId: Self = .init("sceneId", .main)
+}
+
+extension DefaultStoreStorageKey where Value == ViewPath {
+    /// 获取当前 View 所在 界面追踪路径 的环境 Key，可在 StorableViewState 对应 Store 中使用
+    static let viewPath: Self = .init("viewPath", ViewPath())
 }

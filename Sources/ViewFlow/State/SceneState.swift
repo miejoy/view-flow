@@ -11,7 +11,7 @@ import DataFlow
 import SwiftUI
 
 /// 场景事件
-public enum SceneAction: Action {
+public enum SceneAction: Action, @unchecked Sendable {
     case onAppear(any RoutableView, ViewPath)
     case onDisappear(any RoutableView, ViewPath)
 }
@@ -30,7 +30,7 @@ public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
     public var subStates: [String : StorableState] = [:]
     
     /// 当前场景的数据存储器，其他模块可以使用这个存储器保持自己的数据
-    public var storage: SceneStorage
+//    public var storage: SceneStorage
     
     public init() {
         self.init(sceneId: .main)
@@ -38,15 +38,16 @@ public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
     
     public init(sceneId: SceneId) {
         self.sceneId = sceneId
-        self.storage = SceneStorage()
+//        self.storage = SceneStorage()
     }
 }
 
 extension SceneState: ReducerLoadableState {
     
-    public static func didBoxed(on store: Store<some StorableState>) {
+    @MainActor public static func didBoxed(on store: Store<some StorableState>) {
         if let store = store as? Store<SceneState> {
-            store.state.storage.sceneStore = store
+            store[.sceneId] = store.state.sceneId
+            store.storage.sceneStore = store
             // 手动绑定上级 store
             let upStore = Store<AllSceneState>.shared
             let sceneIdStr = store.state.sceneId.description
@@ -61,25 +62,14 @@ extension SceneState: ReducerLoadableState {
                 upStore?.subStates.removeValue(forKey: sceneIdStr)
             }
             
-            if Thread.isMainThread {
-                upStore.observe(store: store) { [weak upStore] newState, _ in
-                    upStore?.subStates[sceneIdStr] = newState
-                }
-                loadReducers(on: store)
-            } else {
-                DispatchQueue.main.async { [weak upStore, weak store] in
-                    guard let upStore = upStore else { return }
-                    guard let store = store else { return }
-                    upStore.observe(store: store) { [weak upStore] newState, _ in
-                        upStore?.subStates[sceneIdStr] = newState
-                    }
-                    loadReducers(on: store)
-                }
+            upStore.observe(store: store) { [weak upStore] newState, _ in
+                upStore?.subStates[sceneIdStr] = newState
             }
+            loadReducers(on: store)
         }
     }
     
-    public static func loadReducers(on store: Store<SceneState>) {        
+    @MainActor public static func loadReducers(on store: Store<SceneState>) {        
         store.registerDefault { state, action in
             switch action {
             case .onAppear(let view, let viewPath):
@@ -104,11 +94,28 @@ extension Never : SceneSharableState {
     public init(sceneId: SceneId) { self.init() }
 }
 
+// MARK: - SceneStorage
+
+extension StateOnStoreStorageKey where Value == SceneStorage, State == SceneState {
+    static let storage: Self = .init("storage")
+}
+
+extension Store where State == SceneState {
+    nonisolated var storage: SceneStorage {
+        self[.storage, default: SceneStorage(sceneStore: self)]
+    }
+}
+
 /// 场景容器，各子功能可用它存在数据
-public final class SceneStorage {
+public final class SceneStorage: @unchecked Sendable {
     /// 当前场景的存储器
-    weak var sceneStore: Store<SceneState>? = nil
+    /// TODO: 非主线程创建是，这个是 nil
+    weak var sceneStore: Store<SceneState>?
     var storage: [ObjectIdentifier: Any] = [:]
+    
+    init(sceneStore: Store<SceneState>? = nil) {
+        self.sceneStore = sceneStore
+    }
     
     public subscript<Key: SceneStorageKey>(_ keyType: Key.Type) -> Key.Value {
         get {

@@ -11,8 +11,9 @@ import DataFlow
 import Combine
 
 
+@MainActor
 @propertyWrapper
-public struct ViewState<State: StorableViewState> : DynamicProperty {
+public struct ViewState<State: StorableViewState> : @preconcurrency DynamicProperty {
 
     @StateObject
     var storage: ViewStateWrapperStorage<State>
@@ -52,6 +53,7 @@ public struct ViewState<State: StorableViewState> : DynamicProperty {
 // MARK: - ViewStateWrapperStorage
 
 /// 界面状态包装器对应存储器，暂时只在内部使用
+@MainActor
 final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject {
     
     @Published
@@ -68,8 +70,8 @@ final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject 
     
     func configIfNeed(_ sceneId: SceneId, _ viewPath: ViewPath, _ recordViewState: Bool) {
         if !isReady {
-            store[SceneIdKey.self] = sceneId
-            store[ViewPathKey.self] = viewPath
+            store[.sceneId] = sceneId
+            store[.viewPath] = viewPath
             if recordViewState {
                 setupLifeCycle(sceneId, viewPath)
             }
@@ -88,18 +90,18 @@ final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject 
     // 记录 ViewState 的话想，需要设置生命周期中的各种过程
     func setupLifeCycle(_ sceneId: SceneId, _ viewPath: ViewPath) {
         let sceneStore = Store<AllSceneState>.shared.sceneStore(of: sceneId)
-        sceneStore.state.addViewState(state: store.state, on: viewPath)
+        sceneStore.addViewState(state: store.state, on: viewPath)
         sceneStore.observe(store: store) { [weak sceneStore] new, _ in
-            sceneStore?.state.updateViewState(state: new, on: viewPath)
+            sceneStore?.updateViewState(state: new, on: viewPath)
         }
         
         store.setDestroyCallback { [weak sceneStore] state in
-            sceneStore?.state.removeViewState(state: state, on: viewPath)
+            sceneStore?.removeViewState(state: state, on: viewPath)
         }
     }
 }
 
-extension SceneState {
+extension Store where State == SceneState {
     
     /// 当前场景所有 ViewState 的存储器
     @usableFromInline
@@ -109,35 +111,35 @@ extension SceneState {
     
     /// 添加对应 ViewState，不触发 SceneState 变化通知
     @usableFromInline
-    func addViewState<State:StorableViewState>(state: State, on viewPath: ViewPath) {
+    func addViewState<S:StorableViewState>(state: S, on viewPath: ViewPath) {
         viewStateContainer.addViewState(state: state, on: viewPath)
-        ViewMonitor.shared.record(event: .addViewState(state: state, viewPath: viewPath, scene: self))
+        ViewMonitor.shared.record(event: .addViewState(state: state, viewPath: viewPath, scene: self.state))
     }
     
     /// 更新对应 ViewState，不触发 SceneState 变化通知
     @usableFromInline
-    func updateViewState<State:StorableViewState>(state: State, on viewPath: ViewPath) {
+    func updateViewState<S:StorableViewState>(state: S, on viewPath: ViewPath) {
         viewStateContainer.updateViewState(state: state, on: viewPath)
-        ViewMonitor.shared.record(event: .updateViewState(state: state, viewPath: viewPath, scene: self))
+        ViewMonitor.shared.record(event: .updateViewState(state: state, viewPath: viewPath, scene: self.state))
     }
     
     /// 删除对应 ViewState，不触发 SceneState 变化通知
     @usableFromInline
-    func removeViewState<State:StorableViewState>(state: State, on viewPath: ViewPath) {
+    func removeViewState<S:StorableViewState>(state: S, on viewPath: ViewPath) {
         viewStateContainer.removeViewState(state: state, on: viewPath)
-        ViewMonitor.shared.record(event: .removeViewState(state: state, viewPath: viewPath, scene: self))
+        ViewMonitor.shared.record(event: .removeViewState(state: state, viewPath: viewPath, scene: self.state))
     }
 }
 
 
-struct ViewStateContainerKey: SceneStorageKey {
-    static func defaultValue(on sceneStore: Store<SceneState>?) -> ViewStateContainer {
+struct ViewStateContainerKey: @preconcurrency SceneStorageKey {
+    @MainActor static func defaultValue(on sceneStore: Store<SceneState>?) -> ViewStateContainer {
         return .init(sceneId: sceneStore?.sceneId ?? .main)
     }
 }
 
 @usableFromInline
-final class ViewStateContainer {
+@MainActor final class ViewStateContainer {
     struct ViewStateId: Hashable, CustomStringConvertible {
         let viewPath: ViewPath
         let stateId: String

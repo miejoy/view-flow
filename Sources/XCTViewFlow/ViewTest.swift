@@ -10,6 +10,7 @@ import UIKit
 #endif
 import SwiftUI
 
+@MainActor
 public class ViewTest {
     
     #if os(macOS)

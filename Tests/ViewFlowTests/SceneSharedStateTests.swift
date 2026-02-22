@@ -11,6 +11,7 @@ import SwiftUI
 @testable import ViewFlow
 import XCTViewFlow
 
+@MainActor
 final class SceneSharedStateTests: XCTestCase {
     
     static var semaphore = DispatchSemaphore(value: 1)
@@ -20,7 +21,8 @@ final class SceneSharedStateTests: XCTestCase {
         sceneStore.subStates = [:]
         sceneStore.arrAppearViewPath = []
         sceneStore.viewStateContainer.mapViewState = [:]
-        sceneStore.storage.storage = [:]
+        sceneStore.sharedStoreContainer.mapExistSharedStore = [:]
+        sceneStore.mapCancellable.removeAll()
     }
     
     func testSceneSharedState() {
@@ -119,7 +121,7 @@ final class SceneSharedStateTests: XCTestCase {
         
         XCTAssertEqual(otherSceneStore.sharedStoreContainer.mapExistSharedStore.count, 1)
         XCTAssertEqual(otherSceneStore.state.subStates.count, 1)
-        let otherSharedStore = otherSceneStore.sharedStoreContainer.mapExistSharedStore[ObjectIdentifier(NormalSharedState.self)]!.value as! Store<NormalSharedState>
+        let otherSharedStore = otherSceneStore.sharedStoreContainer.mapExistSharedStore[ObjectIdentifier(NormalSharedState.self)]!.store as! Store<NormalSharedState>
         
         XCTAssertEqual(normalSharedStateWrapper.wrappedValue.name, "")
         XCTAssertEqual(view.normalSharedState.name, "")
@@ -174,7 +176,7 @@ final class SceneSharedStateTests: XCTestCase {
         XCTAssertEqual(sceneStore.state.subStates.count, 2)
     
         // 保存在 sceneState 中的 store，和 view 中的 store 是一致的
-        let normalSharedStore = sceneStore.state.getSharedStore(of: NormalSharedState.self)
+        let normalSharedStore = sceneStore.getSharedStore(of: NormalSharedState.self)
         XCTAssertTrue(normalSharedStore === normalSharedStateWrapper!.storage.store)
     
         // 默认值是空
@@ -203,7 +205,7 @@ final class SceneSharedStateTests: XCTestCase {
     
     func testDuplicateSceneSharedState() {
         resetDefaultSceneState()
-        class Oberver: ViewMonitorOberver {
+        final class Oberver: ViewMonitorObserver, @unchecked Sendable {
             var duplicateFatalErrorCall = false
             func receiveViewEvent(_ event: ViewEvent) {
                 if case .fatalError(let message) = event,
@@ -265,7 +267,7 @@ final class SceneSharedStateTests: XCTestCase {
         s_mapSharedStore.removeAll()
         
         var expectations: [XCTestExpectation] = []
-        var count: Int = 0
+        nonisolated(unsafe) var count: Int = 0
         
         (0..<5).forEach { _ in
             let expectation = expectation(description: "This should complete")
@@ -278,11 +280,11 @@ final class SceneSharedStateTests: XCTestCase {
                     
                     XCTAssertNotNil(s_mapSharedStore[ObjectIdentifier(AllSceneState.self)])
                     let arrSceneStore = s_mapSharedStore[ObjectIdentifier(AllSceneState.self)] as! Store<AllSceneState>
-                    let sceneStore = arrSceneStore.allSceneStorage.sceneIdToStoreMap[.main]!
+                    let sceneStore = arrSceneStore[.allSceneStorage].sceneIdToStoreMap[.main]!
                     let multiStreadStore = sceneStore.sharedStoreContainer.mapExistSharedStore[ObjectIdentifier(MultiThreadSharedState.self)]
                     XCTAssertNotNil(multiStreadStore)
                     XCTAssertEqual(s_mapSharedStore.count, 2)
-                    XCTAssertEqual(arrSceneStore.allSceneStorage.sceneIdToStoreMap.count, 1)
+                    XCTAssertEqual(arrSceneStore[.allSceneStorage].sceneIdToStoreMap.count, 1)
                     XCTAssertEqual(sceneStore.sharedStoreContainer.mapExistSharedStore.count, 1)
                     count += 1
                 }
@@ -308,7 +310,7 @@ final class SceneSharedStateTests: XCTestCase {
         XCTAssertEqual(s_mapSharedStore.count, 2)
         
         let allSceneStore = Store<AllSceneState>.shared
-        let mainSceneStore = allSceneStore.allSceneStorage.sceneIdToStoreMap[.main]!
+        let mainSceneStore = allSceneStore[.allSceneStorage].sceneIdToStoreMap[.main]!
         
         XCTAssertNotNil(mainSceneStore.sharedStoreContainer.mapExistSharedStore[ObjectIdentifier(MultiThreadNestSharedState.self)])
         XCTAssertNotNil(mainSceneStore.sharedStoreContainer.mapExistSharedStore[ObjectIdentifier(MultiThreadSubSharedState.self)])
@@ -336,11 +338,13 @@ enum NormalAction: Action {
     case userClick
 }
 
+@MainActor
 var sharedReducerIsLoad = false
 struct FullSharedState: FullSceneSharableState {
     typealias BindAction = NormalAction
     var name: String = ""
     
+    @MainActor
     static func loadReducers(on store: Store<FullSharedState>) {
         sharedReducerIsLoad = true
     }
@@ -380,6 +384,7 @@ struct RefreshNormalSharedView: View {
 }
 
 
+@MainActor
 var refreshShagedGetCall = false
 struct RefreshContainSharedView: View {
     
@@ -422,7 +427,9 @@ struct MultiThreadNestSharedState : VoidSceneSharableState {
     
     init() {
         self.name = ""
-        _ = Store<MultiThreadSubSharedState>.shared
+        MainActor.assumeIsolated {
+            _ = Store<MultiThreadSubSharedState>.shared
+        }
     }
 }
 
@@ -431,6 +438,7 @@ struct MultiThreadSubSharedState : VoidSceneSharableState {
 }
 
 extension SceneState {
+    @MainActor
     static func sharedStore(_ method:  String = #function) -> Store<SceneState> {
         SceneState.sharedStore(on: .custom(method))
     }

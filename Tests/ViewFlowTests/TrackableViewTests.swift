@@ -10,6 +10,7 @@ import SwiftUI
 import DataFlow
 @testable import ViewFlow
 
+@MainActor
 final class TrackableViewTests: XCTestCase {
     
     // 暂时无法测试，后期可能用 ViewInspector 测试

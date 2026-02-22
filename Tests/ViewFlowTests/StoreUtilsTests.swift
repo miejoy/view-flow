@@ -10,6 +10,7 @@ import SwiftUI
 import DataFlow
 @testable import ViewFlow
 
+@MainActor
 final class StoreUtilsTests: XCTestCase {
     
     func testBindingState() {

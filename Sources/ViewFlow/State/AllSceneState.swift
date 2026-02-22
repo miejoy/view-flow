@@ -9,32 +9,30 @@
 import Foundation
 import DataFlow
 
-enum AllSceneAction: Action {
+enum AllSceneAction: Action, Sendable {
     // 添加 SceneStore 一般是一个自动的过程，这里先去掉了
     // case addSceneStore(_ sceneId: SceneId, _ sceneStore:Store<SceneState>)
-    case removeSceneStore(_ sceneId: SceneId)
+    // 移除 SceneStore 可以直接通过 Store 提供方法移除
+    // case removeSceneStore(_ sceneId: SceneId)
 }
 
 ///  所有场景状态
 struct AllSceneState: FullSharableState {
     typealias BindAction = AllSceneAction
     
-    var allSceneStorage: AllSceneStorage = .init()
     var subStates: [String : StorableState] = [:]
     
-    static func loadReducers(on store: Store<AllSceneState>) {
-        store.registerDefault { state, action in
-            switch action {
-            // case let .addSceneStore(sceneId, sceneStore):
-            //     state.allSceneStorage[sceneId] = sceneStore
-            case let .removeSceneStore(sceneId):
-                state.allSceneStorage.removeSceneStore(of: sceneId)
-            }
-        }
+    @MainActor static func loadReducers(on store: Store<AllSceneState>) {        
     }
 }
 
-final class AllSceneStorage {
+// MARK: - Storage
+
+extension DefaultStoreStorageKey where Value == AllSceneStorage {
+    static let allSceneStorage: Self = .init("allSceneStorage", AllSceneStorage())
+}
+
+final class AllSceneStorage: @unchecked Sendable {
     var sceneIdToStoreMap: [SceneId: Store<SceneState>] = [:]
     
     func sceneStore(of sceneId: SceneId) -> Store<SceneState> {
@@ -58,8 +56,8 @@ final class AllSceneStorage {
 }
 
 extension Store where State == AllSceneState {
-    func sceneStore(of sceneId: SceneId = .main) -> Store<SceneState> {
-        state.allSceneStorage.sceneStore(of: sceneId)
+    nonisolated func sceneStore(of sceneId: SceneId = .main) -> Store<SceneState> {
+        self[.allSceneStorage].sceneStore(of: sceneId)
     }
 }
 

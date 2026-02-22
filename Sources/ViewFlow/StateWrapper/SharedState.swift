@@ -15,8 +15,9 @@ import Combine
  */
 
 /// 共享状态包装器
+@MainActor
 @propertyWrapper
-public struct SharedState<State: SharableState>: DynamicProperty {
+public struct SharedState<State: SharableState>: @preconcurrency DynamicProperty {
     
     /// 内部存储
     @ObservedObject
@@ -68,7 +69,7 @@ public struct SharedState<State: SharableState>: DynamicProperty {
 // MARK: - SharedStoreStorage
 
 /// 场景共享状态包装器对应存储器，暂时只在内部使用
-final class SharedStoreStorage<State: SharableState>: ObservableObject {
+@MainActor final class SharedStoreStorage<State: SharableState>: ObservableObject {
     
     @Published
     var refreshTrigger: Bool = false
@@ -105,17 +106,17 @@ extension SharedState where State: SceneSharableState {
 
 // MARK: - SceneSharedStoreContainer
 
-extension SceneState {
+extension Store where State == SceneState {
     /// 当前场景可共享状态的 Store 存储器
     @usableFromInline
-    var sharedStoreContainer: SceneSharedStoreContainer {
+    nonisolated var sharedStoreContainer: SceneSharedStoreContainer {
         self.storage[SceneSharedStoreContainerKey.self]
     }
     
     /// 获取当前 Scene 共享的状态
     @usableFromInline
-    func getSharedStore<State: SceneSharableState>(of stateType: State.Type) -> Store<State> {
-        return sharedStoreContainer.getSharedStore(of: State.self)
+    nonisolated func getSharedStore<S: SceneSharableState>(of stateType: S.Type) -> Store<S> {
+        return sharedStoreContainer.getSharedStore(of: S.self)
     }
 }
 
@@ -133,16 +134,31 @@ final class SceneSharedStoreContainer {
     weak var sceneStore: Store<SceneState>?
     
     init(sceneStore: Store<SceneState>?) {
-        self.sceneId = sceneStore?.sceneId ?? .main
+        self.sceneId = sceneStore?[.sceneId] ?? .main
         self.mapExistSharedStore = [:]
         self.sceneStore = sceneStore
+    }
+    
+    @MainActor private static func attachToUpStore<State: SceneSharableState>(_ store: Store<State>, on sceneId: SceneId) {
+        // 判断 upStore 是否添加了当前的状态
+        if !(State.UpState.self is Never.Type) {
+            let upStore = SceneState.sharedStore(on: sceneId).getSharedStore(of: State.UpState.self)
+            if let existState = upStore.subStates[store.state.stateId] {
+                ViewMonitor.shared.fatalError(
+                    "Attach SceneSharableState[\(String(describing: State.self))] to UpState[\(String(describing: State.UpState.self))] " +
+                    "with stateId[\(store.state.stateId)] failed: " +
+                    "exist State[\(String(describing: type(of: existState)))] with same stateId!")
+            }
+            upStore.add(subStore: store)
+        }
     }
     
     func getSharedStore<State: SceneSharableState>(of stateType: State.Type) -> Store<State> {
         let key = ObjectIdentifier(State.self)
         var existOne: Bool = false
+        let sceneId = sceneId
         let store: Store<State> = DispatchQueue.syncOnStoreQueue {
-            if let theStore = mapExistSharedStore[key]?.value as? Store<State> {
+            if let theStore = mapExistSharedStore[key]?.store as? Store<State> {
                 existOne = true
                 return theStore
             }
@@ -155,32 +171,15 @@ final class SceneSharedStoreContainer {
                 return .innerBox()
             }
             let theStore = Store<State>.innerBox(State(sceneId: sceneId))
-            mapExistSharedStore[key] = theStore.eraseToAnyStore()
+            mapExistSharedStore[key] = theStore.eraseToAny()
             return theStore
         }
         if existOne {
             return store
         }
         
-        // 判断 upStore 是否添加了当前的状态
-        if !(State.UpState.self is Never.Type) {
-            let upStore = self.getSharedStore(of: State.UpState.self)
-            let attachStoreBlock = {
-                if let existState = upStore.subStates[store.state.stateId] {
-                    ViewMonitor.shared.fatalError(
-                        "Attach SceneSharableState[\(String(describing: State.self))] to UpState[\(String(describing: State.UpState.self))] " +
-                        "with stateId[\(store.state.stateId)] failed: " +
-                        "exist State[\(String(describing: type(of: existState)))] with same stateId!")
-                }
-                upStore.add(subStore: store)
-            }
-            if Thread.isMainThread {
-                attachStoreBlock()
-            } else {
-                DispatchQueue.main.async {
-                    attachStoreBlock()
-                }
-            }
+        DispatchQueue.executeOnMain {
+            Self.attachToUpStore(store, on: sceneId)
         }
         return store
     }

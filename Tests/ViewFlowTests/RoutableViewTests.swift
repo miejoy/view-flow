@@ -11,6 +11,7 @@ import DataFlow
 @testable import ViewFlow
 import XCTViewFlow
 
+@MainActor
 final class RoutableViewTests: XCTestCase {
     
     // 暂时无法测试，后期可能用 ViewInspector 测试

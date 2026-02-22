@@ -10,6 +10,7 @@ import SwiftUI
 @testable import DataFlow
 @testable import ViewFlow
 
+@MainActor
 class SharedStateTests: XCTestCase {
     func testNormalSharedView() {
         
@@ -48,6 +49,7 @@ struct TestState: SharableState, ReducerLoadableState, ActionBindable {
     
     var content: String = ""
     
+    @MainActor
     static func loadReducers(on store: Store<TestState>) {
         store.register { (state, action: TestAction) in
             switch action {

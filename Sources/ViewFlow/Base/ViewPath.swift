@@ -9,7 +9,7 @@ import SwiftUI
 import DataFlow
 
 /// 界面追踪路径
-public struct ViewPath: Hashable, CustomStringConvertible {
+public struct ViewPath: Hashable, CustomStringConvertible, Sendable {
     
     public var arrPaths: [String] = []
     

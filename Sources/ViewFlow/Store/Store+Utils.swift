@@ -122,25 +122,25 @@ extension Store where State: ActionBindable {
 
 extension Store where State: SceneSharableState {
     /// 内部使用包装器
-    static func innerBox(_ state: State = State(), configs: [StoreConfigPair] = []) -> Self {
+    nonisolated static func innerBox(_ state: State = State(), configs: [StoreConfigPair] = []) -> Self {
         var newConfigs = configs
         newConfigs.append(.make(.useBoxOnShared, true))
         return box(state, configs: newConfigs)
     }
     
     /// 共享状态存储器，读取主场景的（线程安全的，可直接使用）
-    public static var shared: Store<State> {
-        Store<AllSceneState>.shared.sceneStore().state.getSharedStore(of: State.self)
+    public nonisolated static var shared: Store<State> {
+        Store<AllSceneState>.shared.sceneStore().getSharedStore(of: State.self)
     }
     
     /// 对应场景共享状态存储区（线程安全的，可直接使用）
-    public static func shared(on sceneId: SceneId) -> Store<State> {
-        return Store<AllSceneState>.shared.sceneStore(of: sceneId).state.getSharedStore(of: State.self)
+    public nonisolated static func shared(on sceneId: SceneId) -> Store<State> {
+        return Store<AllSceneState>.shared.sceneStore(of: sceneId).getSharedStore(of: State.self)
     }
 }
 
 extension Store where State == SceneState {
-    public static func shared(on sceneId: SceneId) -> Store<State> {
+    public nonisolated static func shared(on sceneId: SceneId) -> Store<State> {
         Store<AllSceneState>.shared.sceneStore(of: sceneId)
     }
 }
@@ -148,11 +148,11 @@ extension Store where State == SceneState {
 extension SceneSharableState {
     /// 共享状态存储器，读取主场景的（线程安全的，可直接使用）
     public static var sharedStore: Store<Self> {
-        Store<AllSceneState>.shared.sceneStore().state.getSharedStore(of: Self.self)
+        Store<AllSceneState>.shared.sceneStore().getSharedStore(of: Self.self)
     }
     
     /// 对应场景共享状态存储区（线程安全的，可直接使用）
     public static func sharedStore(on sceneId: SceneId) -> Store<Self> {
-        Store<AllSceneState>.shared.sceneStore(of: sceneId).state.getSharedStore(of: Self.self)
+        Store<AllSceneState>.shared.sceneStore(of: sceneId).getSharedStore(of: Self.self)
     }
 }

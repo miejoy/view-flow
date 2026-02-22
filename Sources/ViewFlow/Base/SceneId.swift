@@ -9,7 +9,7 @@ import Foundation
 import DataFlow
 
 /// 场景ID
-public enum SceneId: CustomStringConvertible, Hashable {
+public enum SceneId: CustomStringConvertible, Hashable, Sendable {
     /// 主场景
     case main
     case custom(String)

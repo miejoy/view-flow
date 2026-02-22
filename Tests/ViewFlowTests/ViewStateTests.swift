@@ -7,17 +7,18 @@
 
 import XCTest
 import SwiftUI
-import DataFlow
+@testable import DataFlow
 @testable import ViewFlow
 import XCTViewFlow
 
+@MainActor
 final class ViewStateTests: XCTestCase {
     
     func resetDefaultSceneState() {
         let sceneStore = Store<SceneState>.shared
         sceneStore.subStates = [:]
         sceneStore.arrAppearViewPath = []
-        sceneStore.storage.storage = [:]
+        (sceneStore.storage as ViewFlow.SceneStorage).storage = [:]
     }
     
     func testViewState() {
@@ -218,7 +219,7 @@ final class ViewStateTests: XCTestCase {
         let sceneStore = Store<SceneState>.shared
         
         ViewMonitor.shared.arrObservers = []
-        class Oberver: ViewMonitorOberver {
+        final class Oberver: ViewMonitorObserver, @unchecked Sendable {
             var addViewCall = false
             var updateViewCall = false
             var removeViewCall = false
@@ -321,7 +322,7 @@ final class ViewStateTests: XCTestCase {
         // 移除 B，更新 A: 不存在
         // 移除 A: 不存在
         ViewMonitor.shared.arrObservers = []
-        class Oberver: ViewMonitorOberver {
+        final class Oberver: ViewMonitorObserver, @unchecked Sendable {
             var addErrorCall = false
             var updateErrorCall = false
             var removeErrorCall = false
@@ -456,10 +457,11 @@ struct NormalViewState: StorableViewState {
     var name: String = ""
 }
 
-var reducerStateReducerCall = false
+@MainActor var reducerStateReducerCall = false
 struct ReducerViewState: StorableViewState, ReducerLoadableState {
     var name: String = ""
     
+    @MainActor
     static func loadReducers(on store: Store<ReducerViewState>) {
         reducerStateReducerCall = true
     }
@@ -469,12 +471,13 @@ enum NormalViewAction: Action {
     case changeContent(String)
 }
 
-var fullViewStateReducerCall = false
+@MainActor var fullViewStateReducerCall = false
 struct FullViewState: FullStorableViewState {
     typealias BindAction = NormalViewAction
     
     var name: String = ""
     
+    @MainActor
     static func loadReducers(on store: Store<FullViewState>) {
         reducerStateReducerCall = true
         store.registerDefault { state, action in
@@ -490,10 +493,11 @@ struct InitViewState: StorableViewState, InitializableState {
     var name: String = ""
 }
 
-var initStateReducerCall = false
+@MainActor var initStateReducerCall = false
 struct InitReducerViewState: StorableViewState, ReducerLoadableState, UseInitializableState {
     var name: String = ""
     
+    @MainActor
     static func loadReducers(on store: Store<InitReducerViewState>) {
         initStateReducerCall = true
     }

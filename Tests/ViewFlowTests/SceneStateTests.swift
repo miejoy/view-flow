@@ -11,10 +11,11 @@ import DataFlow
 @testable import ViewFlow
 @testable import DataFlow
 
+@MainActor
 final class SceneStateTests: XCTestCase {
     
     func resetAllSceneState() {
-        Store<AllSceneState>.shared.allSceneStorage = .init()
+        Store<AllSceneState>.shared[.allSceneStorage] = .init()
         Store<AllSceneState>.shared.subStates = [:]
         Store<AllSceneState>.shared.mapCancellable.removeAll()
     }
@@ -23,7 +24,7 @@ final class SceneStateTests: XCTestCase {
         let sceneStore = Store<SceneState>.shared
         sceneStore.subStates = [:]
         sceneStore.arrAppearViewPath = []
-        sceneStore.storage.storage = [:]
+        (sceneStore.storage as ViewFlow.SceneStorage).storage = [:]
         sceneStore.mapCancellable.removeAll()
     }
     
@@ -36,7 +37,7 @@ final class SceneStateTests: XCTestCase {
         XCTAssertEqual(allSceneStore.state.subStates.count, 1)
         XCTAssert((allSceneStore.state.subStates[sceneStore!.sceneId.description] != nil))
         
-        allSceneStore.allSceneStorage.removeSceneStore(of: sceneStore!.sceneId)
+        allSceneStore[.allSceneStorage].removeSceneStore(of: sceneStore!.sceneId)
         sceneStore = nil
         XCTAssert(allSceneStore.state.subStates.isEmpty)
         resetAllSceneState()
@@ -55,8 +56,8 @@ final class SceneStateTests: XCTestCase {
         XCTAssertEqual(allSceneStore.state.subStates.count, 2)
         XCTAssert((allSceneStore.state.subStates[sceneStoreSecond!.state.sceneId.description] != nil))
         
-        allSceneStore.allSceneStorage.removeSceneStore(of: sceneStoreMain!.sceneId)
-        allSceneStore.allSceneStorage.removeSceneStore(of: sceneStoreSecond!.sceneId)
+        allSceneStore[.allSceneStorage].removeSceneStore(of: sceneStoreMain!.sceneId)
+        allSceneStore[.allSceneStorage].removeSceneStore(of: sceneStoreSecond!.sceneId)
         
         sceneStoreMain = nil
         sceneStoreSecond = nil
@@ -92,7 +93,6 @@ final class SceneStateTests: XCTestCase {
 //        cancellable.cancel()
 //    }
     
-    @MainActor
     func testSceneStateAction() {
         resetDefaultSceneState()
         let sceneStore = Store<SceneState>.shared
@@ -131,13 +131,13 @@ final class SceneStateTests: XCTestCase {
         var sceneStore: Store<SceneState>? = nil
         sceneStore = Store<SceneState>.shared
         
-        XCTAssertEqual(allSceneStore.allSceneStorage.sceneIdToStoreMap.count, 1)
-        XCTAssertTrue(allSceneStore.allSceneStorage.sceneIdToStoreMap[.main] === sceneStore)
+        XCTAssertEqual(allSceneStore[.allSceneStorage].sceneIdToStoreMap.count, 1)
+        XCTAssertTrue(allSceneStore[.allSceneStorage].sceneIdToStoreMap[.main] === sceneStore)
         XCTAssertEqual(allSceneStore.subStates.count, 1)
         
-        allSceneStore.apply(action: .removeSceneStore(.main))
+        allSceneStore[.allSceneStorage]?.removeSceneStore(of: .main)
         
-        XCTAssertEqual(allSceneStore.allSceneStorage.sceneIdToStoreMap.count, 0)
+        XCTAssertEqual(allSceneStore[.allSceneStorage].sceneIdToStoreMap.count, 0)
         XCTAssertEqual(allSceneStore.subStates.count, 1)
         
         sceneStore = nil

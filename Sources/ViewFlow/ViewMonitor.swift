@@ -8,9 +8,10 @@
 
 import Foundation
 import Combine
+import DataFlow
 
 /// 存储器变化事件
-public enum ViewEvent {
+public enum ViewEvent: MonitorEvent, @unchecked Sendable {
     case viewDidAppear(view: any RoutableView, viewPath: ViewPath, scene: SceneState)
     case viewDidDisappear(view: any RoutableView, viewPath: ViewPath, scene: SceneState)
     case addViewState(state: any StorableViewState, viewPath: ViewPath, scene: SceneState)
@@ -21,56 +22,32 @@ public enum ViewEvent {
     case fatalError(String)
 }
 
-public protocol ViewMonitorOberver: AnyObject {
+public protocol ViewMonitorObserver: MonitorObserver {
+    @MainActor
     func receiveViewEvent(_ event: ViewEvent)
 }
 
 /// 存储器监听器
-public final class ViewMonitor {
-        
-    struct Observer {
-        let observerId: Int
-        weak var observer: ViewMonitorOberver?
-    }
-    
-    /// 监听器共享单例
-    public static var shared: ViewMonitor = .init()
-    
-    /// 所有观察者
-    var arrObservers: [Observer] = []
-    var generateObserverId: Int = 0
-    
-    required init() {
-    }
-    
-    /// 添加观察者
-    public func addObserver(_ observer: ViewMonitorOberver) -> AnyCancellable {
-        generateObserverId += 1
-        let observerId = generateObserverId
-        arrObservers.append(.init(observerId: generateObserverId, observer: observer))
-        return AnyCancellable { [weak self] in
-            if let index = self?.arrObservers.firstIndex(where: { $0.observerId == observerId}) {
-                self?.arrObservers.remove(at: index)
+public final class ViewMonitor: BaseMonitor<ViewEvent> {
+    public nonisolated(unsafe) static let shared: ViewMonitor = {
+        ViewMonitor { event, observer in
+            if Thread.isMainThread {
+                MainActor.assumeIsolated {
+                    (observer as? ViewMonitorObserver)?.receiveViewEvent(event)
+                }
+            } else {
+                Task { @MainActor in
+                    (observer as? ViewMonitorObserver)?.receiveViewEvent(event)
+                }
             }
         }
+    }()
+
+    public func addObserver(_ observer: ViewMonitorObserver) -> AnyCancellable {
+        super.addObserver(observer)
     }
     
-    /// 记录对应事件，这里只负责将所有事件传递给观察者
-    @usableFromInline
-    func record(event: ViewEvent) {
-        guard !arrObservers.isEmpty else { return }
-        arrObservers.forEach { $0.observer?.receiveViewEvent(event) }
-    }
-    
-    @usableFromInline
-    func fatalError(_ message: String) {
-        guard !arrObservers.isEmpty else {
-            #if DEBUG
-            Swift.fatalError(message)
-            #else
-            return
-            #endif
-        }
-        arrObservers.forEach { $0.observer?.receiveViewEvent(.fatalError(message)) }
+    public override func addObserver(_ observer: MonitorObserver) -> AnyCancellable {
+        Swift.fatalError("Only StoreMonitorObserver can observer this monitor")
     }
 }

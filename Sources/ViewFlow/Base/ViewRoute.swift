@@ -9,7 +9,7 @@
 import Foundation
 
 /// 界面对应路由标识
-public struct ViewRoute<InitData>: Hashable, CustomStringConvertible {
+public struct ViewRoute<InitData>: Hashable, CustomStringConvertible, Sendable {
     var routeId: String
     
     public init(_ routeId: String) {
@@ -22,7 +22,7 @@ public struct ViewRoute<InitData>: Hashable, CustomStringConvertible {
 }
 
 /// 抹除初始化类型的界面对应路由标识
-public struct AnyViewRoute: Hashable {
+public struct AnyViewRoute: Hashable, @unchecked Sendable {
     
     public var initDataType: Any.Type
     
@@ -54,7 +54,7 @@ public struct AnyViewRoute: Hashable {
 }
 
 /// 包含数据的界面路由，这个包含了初始化界面需要的所有内容
-public struct ViewRouteData {
+public struct ViewRouteData: @unchecked Sendable {
     
     public let route: AnyViewRoute
     
