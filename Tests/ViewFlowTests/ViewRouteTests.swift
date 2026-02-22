@@ -59,8 +59,8 @@ final class ViewRouteTests: XCTestCase {
     
     func testAnyRouteWrapperData() {
         let rightData: String = "test"
-        let rightAnyData: Any = rightData
-        let wrongData: Any = Int(1)
+        let rightAnyData: Sendable = rightData
+        let wrongData: Sendable = Int(1)
         let route = ViewRoute<String>(defaultViewRouteId)
         let anyRoute = route.eraseToAnyRoute()
         

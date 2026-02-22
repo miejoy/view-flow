@@ -9,7 +9,7 @@
 import Foundation
 
 /// 界面对应路由标识
-public struct ViewRoute<InitData>: Hashable, CustomStringConvertible, Sendable {
+public struct ViewRoute<InitData: Sendable>: Hashable, CustomStringConvertible, Sendable {
     var routeId: String
     
     public init(_ routeId: String) {
@@ -58,14 +58,14 @@ public struct ViewRouteData: @unchecked Sendable {
     
     public let route: AnyViewRoute
     
-    public let initData: Any
+    public let initData: Sendable
     
-    init(route: AnyViewRoute, initData: Any) {
+    init(route: AnyViewRoute, initData: Sendable) {
         self.initData = initData
         self.route = route
     }
         
-    init<InitData>(route: ViewRoute<InitData>, data: InitData) {
+    init<InitData: Sendable>(route: ViewRoute<InitData>, data: InitData) {
         self.init(route: route.eraseToAnyRoute(), initData: data)
     }
 }
@@ -83,7 +83,7 @@ extension ViewRoute {
 
 extension AnyViewRoute {
     /// 包装成完整路由，如果传入的数据类型不是初始化的数据类型，会返回 nil
-    public func wrapper(_ data: Any) -> ViewRouteData? {
+    public func wrapper(_ data: Sendable) -> ViewRouteData? {
         guard type(of: data) == self.initDataType else {
             ViewMonitor.shared.record(event: .wrapperRouteDataFailed(route: self, data: data))
             return nil
