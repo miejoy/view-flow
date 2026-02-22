@@ -24,7 +24,7 @@ extension RoutableView {
     }
     
     @inlinable
-    public static var defaultRoute: ViewRoute<InitData> { .init(String(describing: Self.self)) }
+    public nonisolated static var defaultRoute: ViewRoute<InitData> { .init(String(describing: Self.self)) }
 }
 
 struct RouteWrapperView<Content: View> : View {

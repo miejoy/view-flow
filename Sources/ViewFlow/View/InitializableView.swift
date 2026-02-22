@@ -9,7 +9,7 @@ import SwiftUI
 
 /// 可初始化的 View
 public protocol InitializableView: View {
-    associatedtype InitData
+    associatedtype InitData: Sendable
     
     /// 初始化方法
     @MainActor
