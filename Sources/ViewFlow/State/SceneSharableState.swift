@@ -42,3 +42,12 @@ extension SceneWithIdSharableState {
         self.init(sceneId: .main)
     }
 }
+
+// MARK: - SceneId
+
+extension Store where State: SceneSharableState {
+    // 提供非隔离域的 sceneId 访问
+    nonisolated public var sceneId: SceneId {
+        self[.sceneId]
+    }
+}
