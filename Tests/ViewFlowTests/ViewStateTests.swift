@@ -219,7 +219,7 @@ final class ViewStateTests: XCTestCase {
         let sceneStore = Store<SceneState>.shared
         
         ViewMonitor.shared.arrObservers = []
-        final class Oberver: ViewMonitorObserver, @unchecked Sendable {
+        class Observer: ViewMonitorObserver, @unchecked Sendable {
             var addViewCall = false
             var updateViewCall = false
             var removeViewCall = false
@@ -236,8 +236,8 @@ final class ViewStateTests: XCTestCase {
                 }
             }
         }
-        let oberver = Oberver()
-        let cancellable = ViewMonitor.shared.addObserver(oberver)
+        let observer = Observer()
+        let cancellable = ViewMonitor.shared.addObserver(observer)
                 
         struct NormalView: View {
             @Environment(\.viewPath) var viewPath
@@ -258,9 +258,9 @@ final class ViewStateTests: XCTestCase {
             }
         }
         
-        XCTAssert(!oberver.addViewCall)
-        XCTAssert(!oberver.updateViewCall)
-        XCTAssert(!oberver.removeViewCall)
+        XCTAssert(!observer.addViewCall)
+        XCTAssert(!observer.updateViewCall)
+        XCTAssert(!observer.removeViewCall)
         XCTAssert(sceneStore.viewStateContainer.mapViewState.isEmpty)
         
         var normalStateWrapper: ViewStateWrapperStorage<FullViewState>? = nil
@@ -270,9 +270,9 @@ final class ViewStateTests: XCTestCase {
                 XCTAssert(oldWrapper === wrapper)
             } else {
                 normalStateWrapper = wrapper
-                XCTAssert(oberver.addViewCall)
-                XCTAssert(!oberver.updateViewCall)
-                XCTAssert(!oberver.removeViewCall)
+                XCTAssert(observer.addViewCall)
+                XCTAssert(!observer.updateViewCall)
+                XCTAssert(!observer.removeViewCall)
             }
         }
         
@@ -284,20 +284,20 @@ final class ViewStateTests: XCTestCase {
             XCTAssert(sceneStore.viewStateContainer.mapViewState[viewStateId] != nil)
             XCTAssertEqual((sceneStore.viewStateContainer.mapViewState[viewStateId] as! FullViewState).name, "content")
 
-            XCTAssert(oberver.addViewCall)
-            XCTAssert(oberver.updateViewCall)
-            XCTAssert(!oberver.removeViewCall)
+            XCTAssert(observer.addViewCall)
+            XCTAssert(observer.updateViewCall)
+            XCTAssert(!observer.removeViewCall)
             
             ViewTest.releaseHost(host)
             normalView = nil
             normalStateWrapper = nil
         }
         
-        XCTAssert(oberver.addViewCall)
-        XCTAssert(oberver.updateViewCall)
+        XCTAssert(observer.addViewCall)
+        XCTAssert(observer.updateViewCall)
         // macOS VC 释放存在问题
         #if os(iOS) || os(tvOS)
-        XCTAssert(oberver.removeViewCall)
+        XCTAssert(observer.removeViewCall)
         XCTAssert(sceneStore.viewStateContainer.mapViewState.isEmpty)
         #endif
         
@@ -322,7 +322,7 @@ final class ViewStateTests: XCTestCase {
         // 移除 B，更新 A: 不存在
         // 移除 A: 不存在
         ViewMonitor.shared.arrObservers = []
-        final class Oberver: ViewMonitorObserver, @unchecked Sendable {
+        class Observer: ViewMonitorObserver, @unchecked Sendable {
             var addErrorCall = false
             var updateErrorCall = false
             var removeErrorCall = false
@@ -341,8 +341,8 @@ final class ViewStateTests: XCTestCase {
                 }
             }
         }
-        let oberver = Oberver()
-        let cancellable = ViewMonitor.shared.addObserver(oberver)
+        let observer = Observer()
+        let cancellable = ViewMonitor.shared.addObserver(observer)
         
         autoreleasepool {
             var firstWrapper: ViewStateWrapperStorage<NormalViewState>? = nil
@@ -351,31 +351,31 @@ final class ViewStateTests: XCTestCase {
             }
             let host1 = ViewTest.host(firstView!.environment(\.recordViewState, true))
             XCTAssertEqual(sceneStore.viewStateContainer.mapViewState.keys.first!.description, "->\(firstWrapper!.store.stateId)")
-            XCTAssert(!oberver.addErrorCall)
-            XCTAssert(!oberver.updateErrorCall)
-            XCTAssert(!oberver.removeErrorCall)
+            XCTAssert(!observer.addErrorCall)
+            XCTAssert(!observer.updateErrorCall)
+            XCTAssert(!observer.removeErrorCall)
             
             autoreleasepool {
                 var secondView: NormalView? = NormalView { _ in }
                 let host2 = ViewTest.host(secondView!.environment(\.recordViewState, true))
-                XCTAssert(oberver.addErrorCall)
-                XCTAssert(!oberver.updateErrorCall)
-                XCTAssert(!oberver.removeErrorCall)
+                XCTAssert(observer.addErrorCall)
+                XCTAssert(!observer.updateErrorCall)
+                XCTAssert(!observer.removeErrorCall)
                 secondView = nil
                 ViewTest.releaseHost(host2)
             }
             firstWrapper?.store.name = "new"
-            XCTAssert(oberver.addErrorCall)
-            XCTAssert(oberver.updateErrorCall)
-            XCTAssert(!oberver.removeErrorCall)
+            XCTAssert(observer.addErrorCall)
+            XCTAssert(observer.updateErrorCall)
+            XCTAssert(!observer.removeErrorCall)
             
             
             firstView = nil
             ViewTest.releaseHost(host1)
         }
-        XCTAssert(oberver.addErrorCall)
-        XCTAssert(oberver.updateErrorCall)
-        XCTAssert(oberver.removeErrorCall)
+        XCTAssert(observer.addErrorCall)
+        XCTAssert(observer.updateErrorCall)
+        XCTAssert(observer.removeErrorCall)
         
         cancellable.cancel()
     }

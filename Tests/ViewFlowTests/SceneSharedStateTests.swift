@@ -183,18 +183,18 @@ final class SceneSharedStateTests: XCTestCase {
         XCTAssertEqual(normalSharedStateWrapper?.wrappedValue.name, "")
        
         // 在外层界面刷新时，确保 store 还是原来的 store
-        refreshShagedGetCall = false
+        refreshSharedGetCall = false
 
         // 确保直接调用不会刷新
         ViewTest.refreshHost(host)
-        XCTAssertEqual(refreshShagedGetCall, false)
+        XCTAssertEqual(refreshSharedGetCall, false)
         
         // 开始变更后刷新
         containStateWrapper.wrappedValue.refreshTrigger.toggle()
         ViewTest.refreshHost(host)
         
         // 确认 RefreshNormalView 重新创建
-        XCTAssertEqual(refreshShagedGetCall, true)
+        XCTAssertEqual(refreshSharedGetCall, true)
         XCTAssertEqual(secondInitCall, true)
         
         // 重建后 store 还是同一个
@@ -205,7 +205,7 @@ final class SceneSharedStateTests: XCTestCase {
     
     func testDuplicateSceneSharedState() {
         resetDefaultSceneState()
-        final class Oberver: ViewMonitorObserver, @unchecked Sendable {
+        final class Observer: ViewMonitorObserver, @unchecked Sendable {
             var duplicateFatalErrorCall = false
             func receiveViewEvent(_ event: ViewEvent) {
                 if case .fatalError(let message) = event,
@@ -216,14 +216,14 @@ final class SceneSharedStateTests: XCTestCase {
                 }
             }
         }
-        let oberver = Oberver()
-        let cancellable = ViewMonitor.shared.addObserver(oberver)
+        let observer = Observer()
+        let cancellable = ViewMonitor.shared.addObserver(observer)
         
         SharedState<NormalSharedState>().storage.configStoreIfNeed(.main)
-        XCTAssert(!oberver.duplicateFatalErrorCall)
+        XCTAssert(!observer.duplicateFatalErrorCall)
         
         SharedState<DuplicateSharedState>().storage.configStoreIfNeed(.main)
-        XCTAssert(oberver.duplicateFatalErrorCall)
+        XCTAssert(observer.duplicateFatalErrorCall)
         
         cancellable.cancel()
     }
@@ -233,8 +233,8 @@ final class SceneSharedStateTests: XCTestCase {
         
         struct SaveSceneIdView: View {
             
-            @SharedState var state: SaveSceneSharedStata
-            var callback: (SharedStoreStorage<SaveSceneSharedStata>) -> Void
+            @SharedState var state: SaveSceneSharedState
+            var callback: (SharedStoreStorage<SaveSceneSharedState>) -> Void
             
             var body: some View {
                 callback(_state.storage)
@@ -243,7 +243,7 @@ final class SceneSharedStateTests: XCTestCase {
         }
         
         let sceneId: SceneId = .custom("TestSaveScene")
-        var stateWrapper: SharedStoreStorage<SaveSceneSharedStata>? = nil
+        var stateWrapper: SharedStoreStorage<SaveSceneSharedState>? = nil
         
         let view = SaveSceneIdView {
             stateWrapper = $0
@@ -258,8 +258,8 @@ final class SceneSharedStateTests: XCTestCase {
     }
     
     func testSaveSceneIdSharedStateOnMain() {
-        XCTAssertEqual(SaveSceneSharedStata().sceneId, .main)
-        XCTAssertEqual(SaveSceneSharedStata.sharedStore.sceneId, .main)
+        XCTAssertEqual(SaveSceneSharedState().sceneId, .main)
+        XCTAssertEqual(SaveSceneSharedState.sharedStore.sceneId, .main)
     }
     
     func testCreateSceneSharedStoreOnMultiThread() {
@@ -385,14 +385,14 @@ struct RefreshNormalSharedView: View {
 
 
 @MainActor
-var refreshShagedGetCall = false
+var refreshSharedGetCall = false
 struct RefreshContainSharedView: View {
     
     @SharedState var state: ContainSharedState
     var block: (SharedState<NormalSharedState>) -> Void
     
     var body: some View {
-        refreshShagedGetCall = true
+        refreshSharedGetCall = true
         return ZStack {
             RefreshNormalSharedView(block: block)
         }
@@ -407,7 +407,7 @@ struct ContainSharedState: VoidSceneSharableState {
     var refreshTrigger: Bool = false
 }
 
-struct SaveSceneSharedStata: SceneWithIdSharableState {
+struct SaveSceneSharedState: SceneWithIdSharableState {
     
     let sceneId: SceneId
     

@@ -43,7 +43,7 @@ final class SceneStateTests: XCTestCase {
         resetAllSceneState()
     }
     
-    func testMuiltSceneState() throws {
+    func testMultiSceneState() throws {
         resetAllSceneState()
         let allSceneStore = Store<AllSceneState>.shared
         XCTAssert(allSceneStore.state.subStates.isEmpty)
@@ -73,7 +73,7 @@ final class SceneStateTests: XCTestCase {
 //        XCTAssertEqual(sceneStore.sceneId, mainSceneId)
 //        
 //        ViewMonitor.shared.arrObservers = []
-//        class Oberver: ViewMonitorOberver {
+//        class Observer: ViewMonitorObserver {
 //            var sameSceneIdFatalErrorCall = false
 //            func receiveViewEvent(_ event: ViewEvent) {
 //                if case .fatalError(let message) = event,
@@ -82,13 +82,13 @@ final class SceneStateTests: XCTestCase {
 //                }
 //            }
 //        }
-//        let oberver = Oberver()
-//        let cancellable = ViewMonitor.shared.addObserver(oberver)
+//        let observer = Observer()
+//        let cancellable = ViewMonitor.shared.addObserver(observer)
 //        
-//        XCTAssert(!oberver.sameSceneIdFatalErrorCall)
+//        XCTAssert(!observer.sameSceneIdFatalErrorCall)
 //        let sameSceneStore = Store<SceneState>.shared
 //        XCTAssertEqual(sceneStore.sceneId, sameSceneStore.sceneId)
-//        XCTAssert(oberver.sameSceneIdFatalErrorCall)
+//        XCTAssert(observer.sameSceneIdFatalErrorCall)
 //        
 //        cancellable.cancel()
 //    }
