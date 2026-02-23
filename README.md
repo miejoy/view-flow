@@ -21,7 +21,7 @@ ViewFlow 是自定义 RSV(Resource & State & View) 设计模式中 State 层的�
 
 - StorableState 的扩展协议:
   - SceneSharableState: 当前界面场景的可共享状态
-  - VoidSceneSharableState: 可以用空参数初始化的档期节目场景可共享状态
+  - VoidSceneSharableState: 可以用空参数初始化的当前界面场景可共享状态
   - SceneWithIdSharableState: 用 sceneId 初始化的界面场景可共享状态
   - FullSceneSharableState: 完整的界面场景可共享状态
   - FullSceneWithIdSharableState: 完整的用 sceneId 初始化的界面场景可共享状态

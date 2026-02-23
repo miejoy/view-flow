@@ -28,7 +28,7 @@ final class ViewRouteTests: XCTestCase {
         let anyRoute1 = ViewRoute<Void>(defaultViewRouteId).eraseToAnyRoute()
         let anyRoute2 = ViewRoute<Void>(defaultViewRouteId).eraseToAnyRoute()
         
-        XCTAssert(anyRoute1.equelToRoute(route1))
+        XCTAssert(anyRoute1.equalToRoute(route1))
         XCTAssertEqual(route1.description, "__default__<Void>")
         XCTAssertEqual(route1.description, anyRoute1.description)
         XCTAssertEqual(anyRoute1, anyRoute2)

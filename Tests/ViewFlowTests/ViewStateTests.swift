@@ -214,7 +214,7 @@ final class ViewStateTests: XCTestCase {
         XCTAssert(initStateReducerCall)
     }
     
-    func testViewStateLifeCircly() {
+    func testViewStateLifecycle() {
         resetDefaultSceneState()
         let sceneStore = Store<SceneState>.shared
         

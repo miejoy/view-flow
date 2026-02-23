@@ -171,6 +171,7 @@ final class SceneSharedStoreContainer {
                 return .innerBox()
             }
             let theStore = Store<State>.innerBox(State(sceneId: sceneId))
+            theStore[.sceneId] = sceneId
             mapExistSharedStore[key] = theStore.eraseToAny()
             return theStore
         }

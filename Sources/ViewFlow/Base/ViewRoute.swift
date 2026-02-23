@@ -40,7 +40,7 @@ public struct AnyViewRoute: Hashable, @unchecked Sendable {
         self.anyHash = AnyHashable(route)
     }
     
-    func equelToRoute<InitData>(_ route: ViewRoute<InitData>) -> Bool {
+    func equalToRoute<InitData>(_ route: ViewRoute<InitData>) -> Bool {
         InitData.self == initDataType && routeId == route.routeId
     }
     

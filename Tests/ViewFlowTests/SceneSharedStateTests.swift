@@ -281,8 +281,8 @@ final class SceneSharedStateTests: XCTestCase {
                     XCTAssertNotNil(s_mapSharedStore[ObjectIdentifier(AllSceneState.self)])
                     let arrSceneStore = s_mapSharedStore[ObjectIdentifier(AllSceneState.self)] as! Store<AllSceneState>
                     let sceneStore = arrSceneStore[.allSceneStorage].sceneIdToStoreMap[.main]!
-                    let multiStreadStore = sceneStore.sharedStoreContainer.mapExistSharedStore[ObjectIdentifier(MultiThreadSharedState.self)]
-                    XCTAssertNotNil(multiStreadStore)
+                    let multiThreadStore = sceneStore.sharedStoreContainer.mapExistSharedStore[ObjectIdentifier(MultiThreadSharedState.self)]
+                    XCTAssertNotNil(multiThreadStore)
                     XCTAssertEqual(s_mapSharedStore.count, 2)
                     XCTAssertEqual(arrSceneStore[.allSceneStorage].sceneIdToStoreMap.count, 1)
                     XCTAssertEqual(sceneStore.sharedStoreContainer.mapExistSharedStore.count, 1)
