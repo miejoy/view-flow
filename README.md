@@ -7,13 +7,13 @@ ViewFlow 是自定义 RSV(Resource & State & View) 设计模式中 State 层的�
 [![Swift](https://github.com/miejoy/view-flow/actions/workflows/test.yml/badge.svg)](https://github.com/miejoy/view-flow/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/miejoy/view-flow/branch/main/graph/badge.svg)](https://codecov.io/gh/miejoy/view-flow)
 [![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
-[![Swift](https://img.shields.io/badge/swift-5.4-brightgreen.svg)](https://swift.org)
+[![Swift](https://img.shields.io/badge/swift-6.2-brightgreen.svg)](https://swift.org)
 
 ## 依赖
 
-- iOS 13.0+ / macOS 10.15+
-- Xcode 14.0+
-- Swift 5.4+
+- iOS 14.0+ / macOS 11+
+- Xcode 26.0+
+- Swift 6.2+
 
 ## 简介
 

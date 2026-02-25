@@ -1,5 +1,5 @@
 {
-  "originHash" : "b515fdee7f9d51a065bb2d71a39f77d6471183a354df5c153b6ecde1519f1630",
+  "originHash" : "77ca23fb4e2db11c8451a219831c2c3a178c6e910aa9adf749c0b119e1f9f5a5",
   "pins" : [
     {
       "identity" : "data-flow",
@@ -7,7 +7,16 @@
       "location" : "https://github.com/miejoy/data-flow.git",
       "state" : {
         "branch" : "main",
-        "revision" : "b91865456327f7db71dd4124febe21408be096c1"
+        "revision" : "ea9f7d31299bbe0c736ce78ad80b2aad43ea0072"
+      }
+    },
+    {
+      "identity" : "module-monitor",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/miejoy/module-monitor.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "85b45bfa647010b32bccc336dc228757108b8c92"
       }
     }
   ],

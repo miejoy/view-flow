@@ -8,7 +8,7 @@
 
 import Foundation
 import Combine
-import DataFlow
+import ModuleMonitor
 
 /// 存储器变化事件
 public enum ViewEvent: MonitorEvent, @unchecked Sendable {
@@ -28,7 +28,7 @@ public protocol ViewMonitorObserver: MonitorObserver {
 }
 
 /// 存储器监听器
-public final class ViewMonitor: BaseMonitor<ViewEvent> {
+public final class ViewMonitor: ModuleMonitor<ViewEvent> {
     public nonisolated(unsafe) static let shared: ViewMonitor = {
         ViewMonitor { event, observer in
             DispatchQueue.executeOnMain {

@@ -7,6 +7,7 @@
 
 import XCTest
 import SwiftUI
+@testable import ModuleMonitor
 @testable import DataFlow
 @testable import ViewFlow
 import XCTViewFlow
