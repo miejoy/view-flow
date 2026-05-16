@@ -95,7 +95,7 @@ final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject 
             sceneStore?.updateViewState(state: new, on: viewPath)
         }
         
-        store.setDestroyCallback { [weak sceneStore] state in
+        store.addDestroyCallback { [weak sceneStore] (state: State) in
             sceneStore?.removeViewState(state: state, on: viewPath)
         }
     }

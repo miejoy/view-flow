@@ -60,7 +60,7 @@ extension SceneState: ReducerLoadableState {
             return
         }
         upStore.state.subStates[sceneIdStr] = store.state
-        store.setDestroyCallback { [weak upStore] state in
+        store.addDestroyCallback { [weak upStore] _ in
             upStore?.subStates.removeValue(forKey: sceneIdStr)
         }
         
