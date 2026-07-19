@@ -49,7 +49,7 @@ public struct AnyViewRoute: Hashable, @unchecked Sendable {
     }
     
     public var description: String {
-        "\(routeId)<\(String(describing: initDataType).replacingOccurrences(of: "()", with: "Void"))>"
+        "\(routeId)<\(String(describing: initDataType).replacing("()", with: "Void"))>"
     }
 }
 
