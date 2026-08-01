@@ -40,6 +40,18 @@ public enum ViewResult<ResultData: Sendable>: Sendable {
             throw ViewRouteError.failed(reason: reason)
         }
     }
+    
+    /// 转换成 `Result`，用于 `continuation.resume(with:)`
+    public func resultToResultData() -> Result<ResultData, ViewRouteError> {
+        switch self {
+        case .finished(let data):
+            return .success(data)
+        case .cancelled:
+            return .failure(.cancelled)
+        case .failed(let reason):
+            return .failure(.failed(reason: reason))
+        }
+    }
 }
 
 // MARK: - Equatable（仅当 ResultData: Equatable 时）
