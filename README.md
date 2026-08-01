@@ -42,11 +42,17 @@ ViewFlow 是自定义 RSV(Resource & State & View) 设计模式中 State 层的�
   - VoidInitializableView: 可无需参数初始化的界面协议
   - RoutableView: 可路由的界面协议
   - VoidRoutableView: 可无参数路由的界面协议
+  - ResultableView: 可返回结果的可路由界面协议
+  - VoidResultableView: 无需初始化参数的可返回结果界面协议
 
 - 界面路由
   - ViewRoute: 界面路由标识，每个可路由界面都有一个默认的路由标识，其他的库可以用这个来注册和管理路由界面
   - AnyViewRoute: 抹除初始化类型的界面对应路由标识
   - ViewRouteData: 包含数据的界面路由，这个包含了初始化界面需要的所有内容
+  - ResultableRouteData: 带结果返回的界面初始化数据，封装 initData 和结果回调，支持 finishRoute / cancelRoute / failRoute，回调有且仅有一次（幂等）
+  - ResultViewRoute: 带结果返回的界面路由（`ViewRoute<ResultableRouteData<InitData, ResultData>>` 的 typealias）
+  - ViewResult: 界面返回结果枚举（finished / cancelled / failed），提供 `get() throws` 方法
+  - ViewRouteError: 路由错误类型（cancelled / failed）
 
 ### 各种 State 对应关系如下：
 
@@ -202,6 +208,63 @@ struct ContentRouteView: VoidRoutableView {
     }
 }
 ```
+
+### ResultableView 可返回结果界面使用
+
+继承 `ResultableView` 的界面可以在关闭时返回结果给调用方。调用方通过 async/await 获取结果，
+cancelled / failed 会 throw `ViewRouteError`，调用方用 `do-catch` 处理。
+
+1、定义一个可返回结果的界面
+
+```swift
+import ViewFlow
+import SwiftUI
+
+struct ItemPickerView: ResultableView {
+    typealias InitParam = [String]
+    typealias ResultData = String
+
+    @Environment(\.dismiss) var dismiss
+    let routeData: ResultableRouteData<[String], String>
+
+    init(_ routeData: ResultableRouteData<[String], String>) {
+        self.routeData = routeData
+    }
+
+    var content: some View {
+        List(routeData.initData, id: \.self) { item in
+            Button(item) {
+                routeData.finishRoute(item)  // 返回结果
+                dismiss()                    // 关闭界面（sheet/push 通用）
+            }
+        }
+    }
+}
+```
+
+2、调用方获取结果
+
+```swift
+import ViewFlow
+
+do {
+    let picked = try await presentStore.present(
+        ItemPickerView.defaultRoute,
+        ["Apple", "Banana", "Cherry"]
+    )
+    print("选中: \(picked)")
+} catch ViewRouteError.cancelled {
+    print("用户取消")
+} catch ViewRouteError.failed(let reason) {
+    print("路由失败: \(reason)")
+}
+```
+
+> `defaultRoute` 继承自 `RoutableView`，在 `ResultableView` 上下文中类型自动收敛为
+> `ResultViewRoute<InitParam, ResultData>`，无需额外定义 `defaultResultRoute`。
+>
+> `finishRoute` / `cancelRoute` / `failRoute` 三者幂等——界面调 `finishRoute` 后，
+> 路由管理方再调 `cancelRoute`（如 dismiss 兜底）是 no-op，回调只触发一次。
 
 ## 作者
 
