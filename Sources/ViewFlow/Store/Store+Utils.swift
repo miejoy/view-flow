@@ -9,9 +9,33 @@
 import DataFlow
 import SwiftUI
 
+// MARK: - 安全更新标记
+
+extension DefaultStoreStorageKey where Value == Bool {
+    /// 标记当前 Store 是否处于安全更新中（state 立即更新，但 observer 通知异步触发）
+    static let safeUpdating: Self = .init("SafeUpdating", false)
+}
+
 extension Store {
-    
-    // MARK: - Binding
+
+    /// 当前是否处于安全更新中。
+    /// 通过 `safeUpdating` 设置，observer 据此决定是否异步触发 refreshTrigger。
+    public var isSafeUpdating: Bool {
+        self[.safeUpdating]
+    }
+
+    /// 安全更新：在 block 内更新 state，标记期间 observer 会异步触发 refreshTrigger，
+    /// 避免在 SwiftUI 渲染周期内同步修改 @Published 导致崩溃。
+    public func safeUpdating(_ block: () -> Void) {
+        self[.safeUpdating] = true
+        defer { self[.safeUpdating] = false }
+        block()
+    }
+}
+
+// MARK: - Binding
+
+extension Store {
     
     /// 生成对应值的绑定类型
     ///
@@ -25,8 +49,10 @@ extension Store {
                 // 相同值时不更新
                 return
             }
-            // 这里设置会自动调用监听者
-            self[dynamicMember: keyPath] = value
+            // 通过 safeUpdating 更新：state 立即生效，但 refreshTrigger 异步触发
+            self.safeUpdating {
+                self[dynamicMember: keyPath] = value
+            }
         }
     }
     
@@ -46,7 +72,9 @@ extension Store {
                 // 相同值时不更新
                 return
             }
-            self.send(action: transformSetToAction(value))
+            self.safeUpdating {
+                self.send(action: transformSetToAction(value))
+            }
         }
     }
     
@@ -66,7 +94,9 @@ extension Store {
                 // 相同值时不更新
                 return
             }
-            self.send(action: transformSetToAction(value, transaction))
+            self.safeUpdating {
+                self.send(action: transformSetToAction(value, transaction))
+            }
         }
     }
     
@@ -95,7 +125,9 @@ extension Store where State: ActionBindable {
                 // 相同值时不更新
                 return
             }
-            self.send(action: transformSetToAction(value))
+            self.safeUpdating {
+                self.send(action: transformSetToAction(value))
+            }
         }
     }
     
@@ -115,7 +147,9 @@ extension Store where State: ActionBindable {
                 // 相同值时不更新
                 return
             }
-            self.send(action: transformSetToAction(value, transaction))
+            self.safeUpdating {
+                self.send(action: transformSetToAction(value, transaction))
+            }
         }
     }
 }

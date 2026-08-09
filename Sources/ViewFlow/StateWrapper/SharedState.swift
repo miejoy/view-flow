@@ -88,7 +88,14 @@ public struct SharedState<State: SharableState>: @preconcurrency DynamicProperty
         if store == nil {
             let newStore = makeStore(sceneId)
             self.cancellable = newStore.addObserver { [weak self] new, old in
-                self?.refreshTrigger.toggle()
+                guard let self = self else { return }
+                if newStore.isSafeUpdating {
+                    DispatchQueue.main.async {
+                        self.refreshTrigger.toggle()
+                    }
+                } else {
+                    self.refreshTrigger.toggle()
+                }
             }
             self.store = newStore
         }

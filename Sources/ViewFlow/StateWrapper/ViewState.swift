@@ -81,7 +81,14 @@ final class ViewStateWrapperStorage<State: StorableViewState>: ObservableObject 
             
             // 放在最后避免上面一些方法会更新到 state，导致调用到 refreshTrigger，触发警告
             self.cancellable = store.addObserver { [weak self] new, old in
-                self?.refreshTrigger.toggle()
+                guard let self = self else { return }
+                if self.store.isSafeUpdating {
+                    DispatchQueue.main.async {
+                        self.refreshTrigger.toggle()
+                    }
+                } else {
+                    self.refreshTrigger.toggle()
+                }
             }
             isReady = true
         }
