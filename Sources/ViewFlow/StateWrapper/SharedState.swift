@@ -123,6 +123,9 @@ extension Store where State == SceneState {
     /// 获取当前 Scene 共享的状态
     @usableFromInline
     nonisolated func getSharedStore<S: SceneSharableState>(of stateType: S.Type) -> Store<S> {
+        if S.self is SceneState.Type, let store = self as? Store<S> {
+            return store
+        }
         return sharedStoreContainer.getSharedStore(of: S.self)
     }
 }
@@ -147,17 +150,20 @@ final class SceneSharedStoreContainer {
     }
     
     @MainActor private static func attachToUpStore<State: SceneSharableState>(_ store: Store<State>, on sceneId: SceneId) {
-        // 判断 upStore 是否添加了当前的状态
-        if !(State.UpState.self is Never.Type) {
-            let upStore = SceneState.sharedStore(on: sceneId).getSharedStore(of: State.UpState.self)
-            if let existState = upStore.subStates[store.state.stateId] {
-                ViewMonitor.shared.fatalError(
-                    "Attach SceneSharableState[\(String(describing: State.self))] to UpState[\(String(describing: State.UpState.self))] " +
-                    "with stateId[\(store.state.stateId)] failed: " +
-                    "exist State[\(String(describing: type(of: existState)))] with same stateId!")
-            }
-            upStore.add(subStore: store)
+        // SceneState 自身由 AllSceneState 直接管理，不需要 attachToUpStore
+        guard !(State.self is SceneState.Type) else { return }
+        // UpState 为 AnyState 时不需要挂载到上层
+        guard !(State.UpState.self is AnyState.Type) else { return }
+        let upStore = SceneState.sharedStore(on: sceneId).getSharedStore(of: State.UpState.self)
+        let stateId = store.state.stateId
+        if let existStore = upStore.getSubStore(of: State.self, stateId: stateId), existStore !== store {
+            ViewMonitor.shared.fatalError(
+                "Attach SceneSharableState[\(String(describing: State.self))] to UpState[\(String(describing: State.UpState.self))] " +
+                "with stateId[\(stateId)] failed: " +
+                "exist SubStore[\(String(describing: State.self))] with same stateId!")
+            return
         }
+        upStore.addSubStore(store)
     }
     
     func getSharedStore<State: SceneSharableState>(of stateType: State.Type) -> Store<State> {
@@ -168,14 +174,6 @@ final class SceneSharedStoreContainer {
             if let theStore = mapExistSharedStore[key]?.store as? Store<State> {
                 existOne = true
                 return theStore
-            }
-            // 一直向上会获取到 sceneStore，这里需要截断
-            if State.self is SceneState.Type {
-                if let theStore = sceneStore as? Store<State> {
-                    return theStore
-                }
-                ViewMonitor.shared.fatalError("Get scene store failed")
-                return .innerBox()
             }
             let theStore = Store<State>.innerBox(State(sceneId: sceneId))
             theStore[.sceneId] = sceneId

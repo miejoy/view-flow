@@ -17,7 +17,6 @@ final class ViewStateTests: XCTestCase {
     
     func resetDefaultSceneState() {
         let sceneStore = Store<SceneState>.shared
-        sceneStore.subStates = [:]
         sceneStore.arrAppearViewPath = []
         (sceneStore.storage as ViewFlow.SceneStorage).storage = [:]
     }

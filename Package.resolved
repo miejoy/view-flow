@@ -1,5 +1,5 @@
 {
-  "originHash" : "4f957041aed486691afa97570cd081937cd70b8e5c5ccd45f060531b8b62b02d",
+  "originHash" : "6f9ed760acb3aee90224144d69178c9bd3d72a73f738eee7d6875a3c6c3f3a24",
   "pins" : [
     {
       "identity" : "data-flow",
@@ -7,7 +7,7 @@
       "location" : "https://github.com/miejoy/data-flow.git",
       "state" : {
         "branch" : "main",
-        "revision" : "1d9c57daf9ee502dcdc55b9baa86ec62c0688761"
+        "revision" : "a982ef23b102afdee04b8bfa13dad0af5a5820dc"
       }
     },
     {

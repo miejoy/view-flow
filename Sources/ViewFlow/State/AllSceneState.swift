@@ -17,12 +17,11 @@ enum AllSceneAction: Action, Sendable {
 }
 
 ///  所有场景状态
-struct AllSceneState: FullSharableState {
+struct AllSceneState: StateContainable, FullSharableState {
+    typealias SubState = SceneState
     typealias BindAction = AllSceneAction
     
-    var subStates: [String : StorableState] = [:]
-    
-    @MainActor static func loadReducers(on store: Store<AllSceneState>) {        
+    @MainActor static func loadReducers(on store: Store<AllSceneState>) {
     }
 }
 

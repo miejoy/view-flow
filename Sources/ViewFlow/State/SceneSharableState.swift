@@ -51,3 +51,9 @@ extension Store where State: SceneSharableState {
         self[.sceneId]
     }
 }
+
+// MARK: - AnyState 遵循 SceneSharableState
+
+extension AnyState: SceneSharableState {
+    public init(sceneId: SceneId) { fatalError("AnyState can not init") }
+}

@@ -16,13 +16,11 @@ final class SceneStateTests: XCTestCase {
     
     func resetAllSceneState() {
         Store<AllSceneState>.shared[.allSceneStorage] = .init()
-        Store<AllSceneState>.shared.subStates = [:]
         Store<AllSceneState>.shared.mapCancellable.removeAll()
     }
     
     func resetDefaultSceneState() {
         let sceneStore = Store<SceneState>.shared
-        sceneStore.subStates = [:]
         sceneStore.arrAppearViewPath = []
         (sceneStore.storage as ViewFlow.SceneStorage).storage = [:]
         sceneStore.mapCancellable.removeAll()
@@ -31,68 +29,40 @@ final class SceneStateTests: XCTestCase {
     func testAllSceneState() throws {
         resetAllSceneState()
         let allSceneStore = Store<AllSceneState>.shared
-        XCTAssert(allSceneStore.state.subStates.isEmpty)
+        XCTAssert(allSceneStore.subStateIds.isEmpty)
         
         var sceneStore : Store<SceneState>? = Store<SceneState>.shared
-        XCTAssertEqual(allSceneStore.state.subStates.count, 1)
-        XCTAssert((allSceneStore.state.subStates[sceneStore!.sceneId.description] != nil))
+        XCTAssertEqual(allSceneStore.subStateIds.count, 1)
+        XCTAssert((allSceneStore.getSubStore(of: SceneState.self, stateId: sceneStore!.state.stateId) != nil))
         
         allSceneStore[.allSceneStorage].removeSceneStore(of: sceneStore!.sceneId)
         sceneStore = nil
-        XCTAssert(allSceneStore.state.subStates.isEmpty)
+        XCTAssert(allSceneStore.subStateIds.isEmpty)
         resetAllSceneState()
     }
     
     func testMultiSceneState() throws {
         resetAllSceneState()
         let allSceneStore = Store<AllSceneState>.shared
-        XCTAssert(allSceneStore.state.subStates.isEmpty)
+        XCTAssert(allSceneStore.subStateIds.isEmpty)
         
         var sceneStoreMain : Store<SceneState>? = Store<SceneState>.shared
-        XCTAssertEqual(allSceneStore.state.subStates.count, 1)
-        XCTAssert((allSceneStore.state.subStates[sceneStoreMain!.sceneId.description] != nil))
+        XCTAssertEqual(allSceneStore.subStateIds.count, 1)
+        XCTAssert((allSceneStore.getSubStore(of: SceneState.self, stateId: sceneStoreMain!.state.stateId) != nil))
         
         var sceneStoreSecond : Store<SceneState>? = Store<SceneState>.shared(on: .custom("Second"))
-        XCTAssertEqual(allSceneStore.state.subStates.count, 2)
-        XCTAssert((allSceneStore.state.subStates[sceneStoreSecond!.state.sceneId.description] != nil))
+        XCTAssertEqual(allSceneStore.subStateIds.count, 2)
+        XCTAssert((allSceneStore.getSubStore(of: SceneState.self, stateId: sceneStoreSecond!.state.stateId) != nil))
         
         allSceneStore[.allSceneStorage].removeSceneStore(of: sceneStoreMain!.sceneId)
         allSceneStore[.allSceneStorage].removeSceneStore(of: sceneStoreSecond!.sceneId)
         
         sceneStoreMain = nil
         sceneStoreSecond = nil
-        XCTAssert(allSceneStore.state.subStates.isEmpty)
+        XCTAssert(allSceneStore.subStateIds.isEmpty)
         resetAllSceneState()
     }
 
-    // 目前不可能出现同一个 SceneId 重复注册的情况
-//    func testTwoSceneWithSameSceneId() {
-//        resetDefaultSceneState()
-//        let sceneStore = SharedState<Never>.getSceneStore()
-//        let mainSceneId: SceneId = .main
-//        XCTAssertEqual(sceneStore.sceneId, mainSceneId)
-//        
-//        ViewMonitor.shared.arrObservers = []
-//        class Observer: ViewMonitorObserver {
-//            var sameSceneIdFatalErrorCall = false
-//            func receiveViewEvent(_ event: ViewEvent) {
-//                if case .fatalError(let message) = event,
-//                    message == "Attach SceneState[Main] to AllSceneState failed: exist SceneState with same sceneId!" {
-//                    sameSceneIdFatalErrorCall = true
-//                }
-//            }
-//        }
-//        let observer = Observer()
-//        let cancellable = ViewMonitor.shared.addObserver(observer)
-//        
-//        XCTAssert(!observer.sameSceneIdFatalErrorCall)
-//        let sameSceneStore = Store<SceneState>.shared
-//        XCTAssertEqual(sceneStore.sceneId, sameSceneStore.sceneId)
-//        XCTAssert(observer.sameSceneIdFatalErrorCall)
-//        
-//        cancellable.cancel()
-//    }
-    
     func testSceneStateAction() {
         resetDefaultSceneState()
         let sceneStore = Store<SceneState>.shared
@@ -133,14 +103,14 @@ final class SceneStateTests: XCTestCase {
         
         XCTAssertEqual(allSceneStore[.allSceneStorage].sceneIdToStoreMap.count, 1)
         XCTAssertTrue(allSceneStore[.allSceneStorage].sceneIdToStoreMap[.main] === sceneStore)
-        XCTAssertEqual(allSceneStore.subStates.count, 1)
+        XCTAssertEqual(allSceneStore.subStateIds.count, 1)
         
-        allSceneStore[.allSceneStorage]?.removeSceneStore(of: .main)
+        allSceneStore[.allSceneStorage].removeSceneStore(of: .main)
         
         XCTAssertEqual(allSceneStore[.allSceneStorage].sceneIdToStoreMap.count, 0)
-        XCTAssertEqual(allSceneStore.subStates.count, 1)
+        XCTAssertEqual(allSceneStore.subStateIds.count, 1)
         
         sceneStore = nil
-        XCTAssertEqual(allSceneStore.subStates.count, 0)
+        XCTAssertEqual(allSceneStore.subStateIds.count, 0)
     }
 }

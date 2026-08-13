@@ -19,15 +19,13 @@ public enum SceneAction: Action, @unchecked Sendable {
 /// 场景状态
 public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
     
-    public typealias UpState = Never
+    public typealias UpState = AnyState
     public typealias BindAction = SceneAction
     
     /// 当前场景 ID
     public let sceneId: SceneId
     /// 当前正在显示的所有 View 的 ViewPath，最后一个为最顶层的 View 对应的 ViewPath
     public var arrAppearViewPath: [ViewPath] = []
-    
-    public var subStates: [String : StorableState] = [:]
 
     public init() {
         self.init(sceneId: .main)
@@ -35,6 +33,11 @@ public struct SceneState: StateContainable, SceneSharableState, ActionBindable {
     
     public init(sceneId: SceneId) {
         self.sceneId = sceneId
+    }
+
+    /// 多场景实例用 "<defaultStateId>.<sceneId>" 作为 stateId 区分
+    public var stateId: String {
+        "\(Self.defaultStateId).\(sceneId.description)"
     }
 }
 
@@ -50,23 +53,16 @@ extension SceneState {
 extension SceneState: ReducerLoadableState {
     @MainActor public static func didBoxed(on store: Store<some StorableState>) {
         guard let store = store as? Store<SceneState> else { return }
-        // 手动绑定上级 store
+        // 绑定到上级 AllSceneState store
         let upStore = Store<AllSceneState>.shared
-        let sceneIdStr = store.state.sceneId.description
-        guard upStore.state.subStates[sceneIdStr] == nil else {
+        let id = store.state.stateId
+        if let existStore = upStore.getSubStore(of: SceneState.self, stateId: id), existStore !== store {
             ViewMonitor.shared.fatalError(
-                "Attach SceneState[\(sceneIdStr)] to AllSceneState failed: exist SceneState with same sceneId!"
+                "Attach SceneState[\(id)] to AllSceneState failed: exist SceneState with same sceneId!"
             )
             return
         }
-        upStore.state.subStates[sceneIdStr] = store.state
-        store.addDestroyCallback { [weak upStore] _ in
-            upStore?.subStates.removeValue(forKey: sceneIdStr)
-        }
-        
-        upStore.observe(store: store) { [weak upStore] newState, _ in
-            upStore?.subStates[sceneIdStr] = newState
-        }
+        upStore.addSubStore(store)
         loadReducers(on: store)
     }
     
