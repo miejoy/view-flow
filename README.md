@@ -49,7 +49,7 @@ ViewFlow 是自定义 RSV(Resource & State & View) 设计模式中 State 层的�
   - ViewRoute: 界面路由标识，每个可路由界面都有一个默认的路由标识，其他的库可以用这个来注册和管理路由界面
   - AnyViewRoute: 抹除初始化类型的界面对应路由标识
   - ViewRouteData: 包含数据的界面路由，这个包含了初始化界面需要的所有内容
-  - ResultableRouteData: 带结果返回的界面初始化数据，封装 initData 和结果回调，支持 finishRoute / cancelRoute / failRoute，回调有且仅有一次（幂等）
+  - ResultableRouteData: 带结果返回的界面初始化数据，封装 initData 和结果回调，支持 finishRoute / cancelRoute / failRoute，回调有且仅有一次（幂等）；callback 参数有默认实现，不需要处理结果时可省略
   - ResultViewRoute: 带结果返回的界面路由（`ViewRoute<ResultableRouteData<InitData, ResultData>>` 的 typealias）
   - ViewResult: 界面返回结果枚举（finished / cancelled / failed），提供 `get() throws` 方法
   - ViewRouteError: 路由错误类型（cancelled / failed）

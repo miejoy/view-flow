@@ -168,6 +168,17 @@ final class ResultableRouteDataTests: XCTestCase {
         XCTAssertEqual(routeData.initData, ["a", "b"])
     }
 
+    // MARK: - 默认 callback（不处理结果）
+
+    func testDefaultCallbackDoesNotFire() {
+        // 不传 callback，finishRoute / cancelRoute 不崩溃，回调为默认空实现
+        let routeData = ResultableRouteData<String, String>("init")
+        routeData.finishRoute("done")
+        routeData.cancelRoute()
+        // 能正常访问 initData 即可
+        XCTAssertEqual(routeData.initData, "init")
+    }
+
     // MARK: - Helper
 
     private func waitForResult<R: Sendable & Equatable>(

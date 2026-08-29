@@ -50,8 +50,12 @@ public struct ResultableRouteData<InitData: Sendable, ResultData: Sendable>: Can
     /// 创建带结果返回的初始化数据
     /// - Parameters:
     ///   - initData: 初始化界面所需数据
-    ///   - callback: 结果回调，有且仅有一次。收到 `.finished` / `.cancelled` / `.failed`
-    public init(_ initData: InitData, callback: @escaping @Sendable (ViewResult<ResultData>) -> Void) {
+    ///   - callback: 结果回调，有且仅有一次。收到 `.finished` / `.cancelled` / `.failed`。
+    ///               默认不处理结果（不需要结果的场景可省略）
+    public init(
+        _ initData: InitData,
+        callback: @escaping @Sendable (ViewResult<ResultData>) -> Void = { _ in }
+    ) {
         self.initData = initData
         self.handle = .init(callback)
     }
